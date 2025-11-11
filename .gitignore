@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.env
+.DS_Store
+
+# Editors/OS
+.idea/
+.vscode/
+
+# Outputs
+awesome_vla_ris/
+zotero_import/
+summaries/
+
+# Local env
+exp

@@ -1,0 +1,10 @@
+# Copy to `exp` and fill your credentials, then:  source ./exp
+
+export ZOTERO_USER_ID=1234567
+export ZOTERO_API_KEY="your_zotero_api_key"
+export ZOTERO_STORAGE_DIR="$HOME/Zotero/storage"
+
+# Doubao / ByteDance Ark
+export ARK_API_KEY="your_ark_api_key"
+# Optional: Use a specific bot model id (defaults to a built-in when absent)
+# export ARK_BOT_MODEL="bot-xxxxxxxxxxxxxxxx"
