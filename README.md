@@ -278,6 +278,38 @@ python scripts/watch_and_import_papers.py \
 - 建议设置 `UNPAYWALL_EMAIL` 以便通过 Unpaywall 获取开放获取 PDF 链接。
 - 大库环境可多次运行；若只想预览变更，可加 `--dry-run`。
 
+## sync_zotero_to_notion.py
+
+将 Zotero 条目同步至 Notion 数据库（去重、自动标签、字段映射按数据库属性自动适配）。
+
+环境变量：
+- `ZOTERO_USER_ID`, `ZOTERO_API_KEY`
+- `NOTION_API_KEY`, `NOTION_DATABASE_ID`
+- 可选 `UNPAYWALL_EMAIL`（通过 DOI 尝试补充 PDF 链接）
+
+示例：
+```bash
+source ./exp
+
+# 同步最近 30 天修改的条目到 Notion（不写入，先预览）
+python scripts/sync_zotero_to_notion.py \
+  --since-days 30 \
+  --limit 200 \
+  --tag-file ./tag.json \
+  --dry-run
+
+# 按集合同步，并写入 Notion
+python scripts/sync_zotero_to_notion.py \
+  --collection-name "Embodied AI" \
+  --limit 500 \
+  --tag-file ./tag.json
+```
+
+说明：
+- 自动识别 Notion 数据库中的属性（title/Authors/Year/Abstract/Tags/URL/DOI/Zotero Key/PDF），仅对存在的属性写入；建议在 Notion 数据库中创建这些属性。
+- 去重优先使用 "Zotero Key"（rich_text），若不存在则按标题完全匹配；若需要更稳妥的去重，请在数据库添加 "Zotero Key" 属性。
+- 标签来源于 `tag.json` 的 `sample_keywords`；支持多标签匹配并写入 Notion 的 multi_select。
+
 ## import_ris_folder.py
 
 一键导入某文件夹（含子目录）下所有 `.ris` 文件至 Zotero（通过 Web API 创建条目）。默认每个 RIS 文件单独归入以“该文件名”命名的 Collection（不合并）；也支持将全部合并到同一个 Collection。
