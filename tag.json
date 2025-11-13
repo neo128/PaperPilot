@@ -1,0 +1,295 @@
+{
+  "embodied_ai": {
+    "label": "embodied_ai｜具身智能",
+    "description": "具身智能体在物理或虚拟环境中的学习与交互能力。",
+    "sample_keywords": [
+      "embodied ai",
+      "embodied intelligence",
+      "embodied agent",
+      "具身智能",
+      "具身"
+    ]
+  },
+  "sim2real": {
+    "label": "sim2real｜模拟到现实",
+    "description": "解决仿真环境与真实世界之间域差距的技术。",
+    "sample_keywords": [
+      "sim2real",
+      "simulation to reality",
+      "domain randomization",
+      "真实迁移",
+      "仿真迁移"
+    ]
+  },
+  "teleoperation": {
+    "label": "teleoperation｜遥操作",
+    "description": "人类远程实时控制机器人，典型的人在环决策模式。",
+    "sample_keywords": [
+      "teleoperation",
+      "remote robot",
+      "shared autonomy",
+      "遥操作",
+      "远程控制"
+    ]
+  },
+  "robotic_navigation": {
+    "label": "robotic_navigation｜机器人导航",
+    "description": "机器人通过环境理解与路径规划进行移动。",
+    "sample_keywords": [
+      "robot navigation",
+      "path planning",
+      "exploration",
+      "导航",
+      "路径规划"
+    ]
+  },
+  "robotic_manipulation": {
+    "label": "robotic_manipulation｜机器人操作",
+    "description": "机器人（通常通过机械臂）与物体交互、操控任务。",
+    "sample_keywords": [
+      "robotic manipulation",
+      "robot arm control",
+      "manipulation",
+      "机器人 操作",
+      "机器人操作"
+    ]
+  },
+  "robotic_grasping": {
+    "label": "robotic_grasping｜机器人抓取",
+    "description": "机器人检测、规划和执行物体抓取任务。",
+    "sample_keywords": [
+      "robotic grasping",
+      "grasp detection",
+      "grasp planning",
+      "抓取",
+      "抓握"
+    ]
+  },
+  "vision_language_model": {
+    "label": "vision_language_model｜视觉语言模型",
+    "description": "结合视觉与语言的多模态大模型（VLM）。",
+    "sample_keywords": [
+      "vision language model",
+      "vlm",
+      "vision-language",
+      "视觉语言模型",
+      "图文模型"
+    ]
+  },
+  "vision_language_action_model": {
+    "label": "vision_language_action_model｜视觉语言动作模型",
+    "description": "统一视觉、语言、动作的多模态机器人控制模型（VLA）。",
+    "sample_keywords": [
+      "vla",
+      "vision language action",
+      "vision-language-action",
+      "视觉语言动作模型"
+    ]
+  },
+  "large_language_model": {
+    "label": "large_language_model｜大语言模型",
+    "description": "用于理解任务、推理、规划的超大规模语言模型（LLM）。",
+    "sample_keywords": [
+      "large language model",
+      "llm",
+      "foundation language model",
+      "大语言模型"
+    ]
+  },
+  "foundation_model": {
+    "label": "foundation_model｜基础模型",
+    "description": "通用可适配多个下游任务的大模型范式。",
+    "sample_keywords": [
+      "foundation model",
+      "generalist model",
+      "多任务模型",
+      "基础模型"
+    ]
+  },
+  "dexterous_hand": {
+    "label": "dexterous_hand｜灵巧机械手",
+    "description": "高自由度的类人多指机械手用于复杂和精细操作。",
+    "sample_keywords": [
+      "dexterous hand",
+      "robotic hand",
+      "multi-finger hand",
+      "灵巧手"
+    ]
+  },
+  "humanoid_robot": {
+    "label": "humanoid_robot｜类人机器人",
+    "description": "具有类似人类形态与运动结构的机器人。",
+    "sample_keywords": [
+      "humanoid robot",
+      "biped robot",
+      "android",
+      "类人机器人"
+    ]
+  },
+  "quadruped_robot": {
+    "label": "quadruped_robot｜四足机器人",
+    "description": "具有四足结构的仿生机器人。",
+    "sample_keywords": [
+      "quadruped robot",
+      "legged robot",
+      "四足机器人"
+    ]
+  },
+  "robotic_arm": {
+    "label": "robotic_arm｜机械臂",
+    "description": "具有多自由度的机械臂与末端执行器，用于操作任务。",
+    "sample_keywords": [
+      "robot arm",
+      "robotic manipulator",
+      "机械臂"
+    ]
+  },
+  "reinforcement_learning": {
+    "label": "reinforcement_learning｜强化学习",
+    "description": "通过试错与环境反馈学习策略。",
+    "sample_keywords": [
+      "reinforcement learning",
+      "RL",
+      "policy gradient",
+      "强化学习"
+    ]
+  },
+  "imitation_learning": {
+    "label": "imitation_learning｜模仿学习",
+    "description": "通过示范数据学习行为策略。",
+    "sample_keywords": [
+      "imitation learning",
+      "behavior cloning",
+      "learning from demonstration",
+      "模仿学习",
+      "示范学习"
+    ]
+  },
+  "world_model": {
+    "label": "world_model｜世界模型",
+    "description": "学习环境动力学并进行内部模拟的模型。",
+    "sample_keywords": [
+      "world model",
+      "environment model",
+      "planning world model",
+      "世界模型"
+    ]
+  },
+  "simulator": {
+    "label": "simulator｜仿真平台",
+    "description": "为机器人训练提供高保真物理和视觉仿真的平台。",
+    "sample_keywords": [
+      "simulator",
+      "physics engine",
+      "Mujoco",
+      "AI2-THOR",
+      "仿真器"
+    ]
+  },
+  "motion_planning": {
+    "label": "motion_planning｜运动规划",
+    "description": "机器人从起始状态到目标状态的无碰撞路径/轨迹规划。",
+    "sample_keywords": [
+      "motion planning",
+      "path planning",
+      "trajectory planning",
+      "运动规划"
+    ]
+  },
+  "task_planning": {
+    "label": "task_planning｜任务规划",
+    "description": "为实现复杂任务制定高层行动序列。",
+    "sample_keywords": [
+      "task planning",
+      "symbolic planning",
+      "planner",
+      "任务规划"
+    ]
+  },
+  "code_based_task_planning": {
+    "label": "code_based_task_planning｜代码任务规划",
+    "description": "使用LLM生成可执行代码用于机器人任务执行。",
+    "sample_keywords": [
+      "code as policies",
+      "programmatic planning",
+      "LLM code planning",
+      "代码 任务规划"
+    ]
+  },
+  "language_based_task_planning": {
+    "label": "language_based_task_planning｜语言任务规划",
+    "description": "使用LLM通过语言理解执行高层规划。",
+    "sample_keywords": [
+      "LLM planner",
+      "language based planning",
+      "语言规划"
+    ]
+  },
+  "end_to_end_task_planning": {
+    "label": "end_to_end_task_planning｜端到端任务规划",
+    "description": "通过单模型从感知直接到动作的完整规划。",
+    "sample_keywords": [
+      "end-to-end planning",
+      "holistic policy",
+      "端到端规划"
+    ]
+  },
+  "grounded_task_planning": {
+    "label": "grounded_task_planning｜具身语义任务规划",
+    "description": "与环境中的物体和物理可行性紧密结合的任务规划。",
+    "sample_keywords": [
+      "grounded planning",
+      "affordance planning",
+      "环境 规划"
+    ]
+  },
+  "transformer_policy": {
+    "label": "transformer_policy｜Transformer控制策略",
+    "description": "基于Transformer结构进行序列控制建模。",
+    "sample_keywords": [
+      "transformer policy",
+      "robotics transformer",
+      "RT-1",
+      "transformer 控制"
+    ]
+  },
+  "diffusion_policy": {
+    "label": "diffusion_policy｜扩散策略学习",
+    "description": "使用扩散模型建模动作序列生成。",
+    "sample_keywords": [
+      "diffusion policy",
+      "action diffusion",
+      "扩散 策略"
+    ]
+  },
+  "3d_vision": {
+    "label": "3d_vision｜3D视觉感知",
+    "description": "使用深度、点云、体素等三维信息进行机器人感知。",
+    "sample_keywords": [
+      "3d vision",
+      "3d perception",
+      "depth sensing",
+      "3D视觉"
+    ]
+  },
+  "point_based_action": {
+    "label": "point_based_action｜基于点的控制",
+    "description": "通过关键点或空间点进行动作控制。",
+    "sample_keywords": [
+      "keypoint action",
+      "point based action",
+      "spatial keypoint",
+      "关键点 控制"
+    ]
+  },
+  "chain_of_thought": {
+    "label": "chain_of_thought｜链式推理",
+    "description": "将复杂任务分解为连续推理步骤的 CoT 控制。",
+    "sample_keywords": [
+      "chain of thought",
+      "cot reasoning",
+      "step by step reasoning",
+      "链式思维"
+    ]
+  }
+}

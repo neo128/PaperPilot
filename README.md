@@ -78,19 +78,40 @@ python scripts/awesome_vla_to_ris.py --enrich-dblp --enrich-arxiv --out ./awesom
 常用场景：
 
 1. **批量处理某个 Zotero Collection：**
+  ```bash
+  source ./exp
+  python scripts/summarize_zotero_with_doubao.py \
+    --collection-name "Embodied AI" \
+    --recursive \
+    --limit 0 \
+    --max-pages 100 \
+    --max-chars 100000 \
+    --summary-dir ./summaries \
+    --insert-note
+  ```
+   - `--collection-name`：根据名称解析 Collection（或用 `--collection` 直接给 key）。
+   - `--limit`：限制父条目数量（0 表示不限）。
+  - `--insert-note`：生成后写入 Zotero Notes（中文 Markdown，本地渲染优先）。
+
+2. **对整个文献库运行（不指定 Collection/Tag）：**
    ```bash
    source ./exp
+   # 小范围试跑
    python scripts/summarize_zotero_with_doubao.py \
-     --collection-name "Surveys" \
+     --limit 50 \
+     --max-pages 100 \
+     --max-chars 100000 \
+     --summary-dir ./summaries \
+     --insert-note
+
+   # 全量运行（limit=0 表示不限；大库请谨慎）
+   python scripts/summarize_zotero_with_doubao.py \
      --limit 0 \
-     --max-pages 50 \
-     --max-chars 10000 \
+     --max-pages 100 \
+     --max-chars 100000 \
      --summary-dir ./summaries \
      --insert-note
    ```
-   - `--collection-name`：根据名称解析 Collection（或用 `--collection` 直接给 key）。
-   - `--limit`：限制父条目数量（0 表示不限）。
-   - `--insert-note`：生成后写入 Zotero Notes（中文 Markdown，本地渲染优先）。
 
 2. **直接处理本地 PDF：**
    ```bash
@@ -106,6 +127,7 @@ python scripts/awesome_vla_to_ris.py --enrich-dblp --enrich-arxiv --out ./awesom
 选项速查：
 
 - 选择范围：`--collection-name` / `--collection` / `--tag` / `--item-keys` / `--pdf-path` / `--storage-key`
+- 递归集合：`--recursive`（当集合下只有子集合时很有用）
 - 控制规模：`--limit`（0=不设上限）、`--max-pages`（读取 PDF 页数）、`--max-chars`（传给模型的字符上限）
 - 输出控制：`--summary-dir`（本地保存）、`--insert-note`（写回 Zotero）、`--note-tag`（给 Note 打标签）、`--force`（忽略已有“AI总结/豆包自动总结”笔记，强制重写）
 - 环境/路径：`--storage-dir`（Zotero storage 路径）、`--model`（豆包 bot id，未给会自动回退）
@@ -133,9 +155,152 @@ python scripts/delete_collection_notes.py --collection-name "Surveys"
 
 可通过 `--collection` 指定 Collection Key，`--limit` 限制扫描条目数。
 
+## merge_zotero_duplicates.py
+
+扫描 Zotero 中的顶层条目，按“DOI → URL → 标题/年份”自动分组重复项，并基于“是否包含 PDF/附件、是否已有 Notes、最近修改时间”三重优先级选出保留对象。其余重复条目的附件与 Notes 会自动迁移到保留条目，集合（Collections）与标签也会合并，最后删除冗余条目。
+
+常用示例：
+
+```bash
+source ./exp
+# 预览整个库中的重复情况（不执行修改）
+python scripts/merge_zotero_duplicates.py --dry-run
+
+# 只处理某个集合，限定 200 条以内
+python scripts/merge_zotero_duplicates.py \
+  --collection-name "Embodied AI" \
+  --limit 200
+```
+
+选项提示：
+- `--tag`：只处理含有该标签的顶层条目。
+- `--group-by`：可切换分组策略（`auto`/`doi`/`url`/`title`），默认 auto。
+- `--dry-run`：仅打印迁移/删除计划，便于确认。
+
+## list_zotero_collections.py
+
+输出 Zotero 文献库的 Collection 层级结构，可选展示每个 Collection 下的部分条目，便于快速了解库的组织方式。
+
+```bash
+source ./exp
+# 打印所有 Collection 的树状结构
+python scripts/list_zotero_collections.py
+
+# 仅查看某个集合及其子层级，并展示每层前 3 条文献
+python scripts/list_zotero_collections.py \
+  --root-name "Embodied AI" \
+  --items 3
+
+# 将全部层级输出保存到文件
+python scripts/list_zotero_collections.py \
+  --items 0 | tee collections_tree.txt
+
+# 生成 Markdown，并写入 paper.md（含每层前 5 条文献及其 URL）
+python scripts/list_zotero_collections.py \
+  --items 5 \
+  --format markdown \
+  --no-ids \
+  --output paper.md
+```
+
+常用选项：
+- `--root` / `--root-name`：以某个集合为根节点输出（默认输出全部顶层）。
+- `--items`：每个集合展示前 N 条顶层条目（0 表示不展示）。
+- `--max-depth`：限制树的深度，避免输出过长。
+- `--format markdown`：以 Markdown 输出（条目自动附带 URL，集合名称加粗）。
+- `--no-ids`：隐藏集合/条目的 key，适合分享或文档。
+- `--output FILE`：直接写入文件，便于保存（默认打印到终端）。
+- 默认忽略回收站（Trash）中的集合与条目；如需包含，可加 `--include-deleted`。
+- 不指定 `--root` 时会遍历整个库；可配合 shell 重定向（`>` 或 `tee`）保存结果。
+
+## enrich_zotero_abstracts.py
+
+批量检查 Zotero 条目是否缺失摘要（abstractNote），并按“条目 URL → CrossRef → Semantic Scholar → arXiv”的优先级自动补全，无法获取则跳过。
+
+```bash
+source ./exp
+# 扫描整个库，找出缺失摘要的条目并写回
+python scripts/enrich_zotero_abstracts.py
+
+# 仅处理某个 Collection / Tag，并先 dry-run 预览
+python scripts/enrich_zotero_abstracts.py \
+  --collection-name "Embodied AI" \
+  --tag "Awesome-VLA" \
+  --limit 100 \
+  --dry-run
+```
+
+默认策略：
+- 若条目已提供 URL，则先尝试：a) 直接解析 URL（支持 arXiv/DOI、常见 meta 标签）提取摘要；b) 从该 URL 推导的 DOI / arXiv ID。
+- 若仍无摘要，再根据条目的 DOI 请求 CrossRef；无结果时按 DOI/arXiv ID 查询 Semantic Scholar，最后直接调用 arXiv API。
+- 只处理顶层条目（忽略 notes/attachments），已有摘要的条目会跳过。
+- `--dry-run`：仅显示计划写入的条目与来源，不修改 Zotero。
+
 ---
 
 如需自定义功能，可参考以上脚本结构扩展。运行前确保网络可访问 GitHub、Zotero API 以及豆包 API。
+
+## watch_and_import_papers.py
+
+基于 `tag.json` 的关键词体系，自动检索近期高影响力论文、打分筛选、去重后写入 Zotero，并按标签放入对应 Collection，自动附上 PDF 链接与摘要（若可获取）。
+
+```bash
+source ./exp
+
+# 以 tag.json 为标签体系，检索近 14 天，按每个标签保留 Top-10
+python scripts/watch_and_import_papers.py \
+  --tags ./tag.json \
+  --since-days 14 \
+  --top-k 10 \
+  --min-score 0.3 \
+  --create-collections \
+  --dry-run
+
+# 真正写入，并输出日志与 JSON 报告
+python scripts/watch_and_import_papers.py \
+  --tags ./tag.json \
+  --since-days 14 \
+  --top-k 10 \
+  --min-score 0.3 \
+  --create-collections \
+  --log-file logs/run.log \
+  --report-json reports/run.json
+```
+
+特性：
+- 数据源：arXiv（关键词），可选使用 Semantic Scholar 与 CrossRef 进行引用数与摘要补全（已内置降级策略）。
+- 打分：默认 0.5×时效 + 0.35×引用数(归一化) + 0.15×重要引用(归一化)。
+- 去重：优先使用 DOI → arXiv ID → 规范化 URL → 标题+年份；库内索引 + 本次运行去重。
+- 写入：创建父条目（`journalArticle`），写入标题/作者/日期/DOI/URL/摘要/标签/集合，并附上 PDF 链接（arXiv 或 Unpaywall）。
+- 日志：在 `logs/` 生成文本日志；在 `reports/` 生成 JSON 报告，包含候选/新增/跳过统计与错误信息。
+
+提示：
+- 建议设置 `UNPAYWALL_EMAIL` 以便通过 Unpaywall 获取开放获取 PDF 链接。
+- 大库环境可多次运行；若只想预览变更，可加 `--dry-run`。
+
+## import_ris_folder.py
+
+一键导入某文件夹（含子目录）下所有 `.ris` 文件至 Zotero（通过 Web API 创建条目）。默认每个 RIS 文件单独归入以“该文件名”命名的 Collection（不合并）；也支持将全部合并到同一个 Collection。
+
+```bash
+source ./exp
+python scripts/import_ris_folder.py \
+  --dir ./awesome_vla_ris \
+  --dedupe-by-url
+
+# 合并到同一个集合：
+python scripts/import_ris_folder.py \
+  --dir ./zotero_import \
+  --collection-name "Imported (RIS)" \
+  --create-collection \
+  --dedupe-by-url
+```
+
+说明：
+- 该脚本解析基础 RIS 字段（TI/UR/AU/PY/KW），以 `webpage` 类型创建条目，并写入标题、URL、作者、日期与标签。
+- 默认：每个 RIS 文件的记录会放到“同名 Collection”下（例如 `Embodied_AI_Embodied_Agent.ris` → `Embodied_AI_Embodied_Agent`）。
+- 合并模式：使用 `--collection-name`（可配合 `--create-collection` 自动创建），或直接用 `--collection <key>`。
+- `--dedupe-by-url` 可避免重复导入相同 URL 的条目。
 
 ## 常见问题（Troubleshooting）
 

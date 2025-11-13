@@ -63,24 +63,27 @@ class ZoteroAPI:
         url = f"{self.base}/items"
         if collection:
             url = f"{self.base}/collections/{collection}/items"
+        # Use a sane per-page size; interpret limit<=0 as unlimited
+        page_limit = 100
         params = {
             "format": "json",
             "include": "data",
-            "limit": limit,
+            "limit": page_limit,
         }
         if tag:
             params["tag"] = tag
 
         yielded = 0
-        while url and yielded < limit:
+        remaining = limit if (isinstance(limit, int) and limit > 0) else None
+        while url:
             resp = self.session.get(url, params=params)
             resp.raise_for_status()
             data = resp.json()
             for item in data:
                 yield item["data"]
                 yielded += 1
-                if yielded >= limit:
-                    break
+                if remaining is not None and yielded >= remaining:
+                    return
             url = parse_next_link(resp.headers.get("Link"))
             params = None  # already encoded in Link
 
@@ -119,6 +122,19 @@ class ZoteroAPI:
         for entry in resp.json():
             data = entry.get("data", {})
             out[data.get("name")] = {"key": entry.get("key"), "parent": data.get("parentCollection")}
+        return out
+
+    def list_child_collections(self, parent_key: str) -> List[Dict[str, Optional[str]]]:
+        """Return direct child collections (data with key/name/parent)."""
+        resp = self.session.get(
+            f"{self.base}/collections/{parent_key}/collections",
+            params={"limit": 200, "format": "json", "include": "data"},
+        )
+        resp.raise_for_status()
+        out: List[Dict[str, Optional[str]]] = []
+        for entry in resp.json():
+            data = entry.get("data", {})
+            out.append({"key": entry.get("key"), "name": data.get("name"), "parent": data.get("parentCollection")})
         return out
 
 
@@ -455,6 +471,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--insert-note", action="store_true", help="Insert generated summaries back into Zotero notes when PDFs come from storage.")
     parser.add_argument("--model", help="Override Doubao bot model id (defaults to env ARK_BOT_MODEL or built-in).")
     parser.add_argument("--force", action="store_true", help="Ignore existing AI总结/豆包总结笔记并重新生成。")
+    parser.add_argument("--recursive", action="store_true", help="Include items in sub-collections when a collection is selected.")
     return parser.parse_args()
 
 
@@ -513,6 +530,30 @@ def main() -> None:
             resolved_collection_key = match_info["key"]
             print(f"[INFO] Resolved collection '{match_name}' → {resolved_collection_key}")
 
+        # Collect descendant collections if --recursive is set
+        resolved_collection_keys: List[str] = []
+        if resolved_collection_key:
+            if args.recursive:
+                stack = [resolved_collection_key]
+                seen = set()
+                while stack:
+                    key = stack.pop()
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    resolved_collection_keys.append(key)
+                    try:
+                        for child in zotero_client.list_child_collections(key):
+                            if child.get("key"):
+                                stack.append(child["key"])
+                    except Exception:
+                        # If listing child collections fails, still process current
+                        pass
+            else:
+                resolved_collection_keys = [resolved_collection_key]
+        else:
+            resolved_collection_keys = []
+
     if local_pdfs:
         summary_dir = Path(args.summary_dir).expanduser() if args.summary_dir else None
         if summary_dir:
@@ -565,15 +606,22 @@ def main() -> None:
     if args.item_keys:
         parent_items = [zotero_client.fetch_item(key.strip()) for key in args.item_keys.split(",") if key.strip()]
     else:
-        parent_items = list(
-            zotero_client.iter_items(collection=resolved_collection_key, tag=args.tag, limit=fetch_limit)
-        )
+        parent_items = []
+        if resolved_collection_keys:
+            for coll_key in resolved_collection_keys:
+                parent_items.extend(
+                    zotero_client.iter_items(collection=coll_key, tag=args.tag, limit=fetch_limit)
+                )
+        else:
+            parent_items = list(zotero_client.iter_items(collection=None, tag=args.tag, limit=fetch_limit))
 
     if not parent_items:
         scope = []
         if args.tag:
             scope.append(f"tag='{args.tag}'")
-        if args.collection:
+        if args.collection_name:
+            scope.append(f"collection-name='{args.collection_name}'")
+        elif args.collection:
             scope.append(f"collection='{args.collection}'")
         scope_desc = ", ".join(scope) if scope else "entire library (limited by permissions)"
         print(f"[INFO] No Zotero items matched {scope_desc}; nothing to process.")
