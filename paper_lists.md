@@ -1,0 +1,196 @@
+- **Agent**
+  - [Agent AI: Surveying the Horizons of Multimodal Interaction](http://arxiv.org/abs/2401.03568)
+- **Embodied AI**
+  - (untitled)
+  - **Agent**
+    - [Spatial Reasoning and Planning for Deep Embodied Agents](https://arxiv.org/pdf/2409.19479)
+    - [Autort: Embodied foundation models for large scale orchestration of robotic agents](https://arxiv.org/pdf/2401.12963)
+    - [A Formal Basis for the Heuristic Determination of Minimum Cost Paths](https://ieeexplore.ieee.org/abstract/document/4082128)
+    - [Embodied-Reasoner: Synergizing Visual Search, Reasoning, and Action for Embodied Interactive Tasks](https://arxiv.org/abs/2503.21696)
+    - [Spatially Visual Perception for End-to-End Robotic Learning](https://arxiv.org/pdf/2411.17458)
+  - **AI_Sim_to_Real_Adaptation**
+    - [A Path Towards Autonomous Machine Intelligence Version 0.9.2, 2022-06-27](https://openreview.net/pdf?id=BZ5a1r-kVsf&)
+    - [Domain Randomization for Transferring Deep Neural Networks from Simulation to the Real World](https://ieeexplore.ieee.org/abstract/document/8202133)
+    - [Sim2Real Transfer for Reinforcement Learning without Dynamics Randomization](https://ieeexplore.ieee.org/abstract/document/9341260)
+    - [Real2Sim2Real: Self-Supervised Learning of Physical Single-Step Dynamic Actions for Planar Robot Casting](https://dl.acm.org/doi/abs/10.1109/ICRA46639.2022.9811651)
+    - [Reward-Adaptive Reinforcement Learning: Dynamic Policy Gradient Optimization for Bipedal Locomotion](https://ieeexplore.ieee.org/abstract/document/9956746)
+  - **Interaction**
+    - [A frontier-based approach for autonomous exploration](https://dl.acm.org/doi/abs/10.5555/523996.793157)
+    - [Jacquard: A Large Scale Dataset for Robotic Grasp Detection](https://ieeexplore.ieee.org/abstract/document/8593950)
+    - [Shape Completion Enabled Robotic Grasping](https://ieeexplore.ieee.org/abstract/document/8206060)
+    - [Efficient grasping from RGBD images: Learning using a new rectangle representation](https://ieeexplore.ieee.org/abstract/document/5980145)
+    - [AnyGrasp: Robust and Efficient Grasp Perception in Spatial and Temporal Domains](https://ieeexplore.ieee.org/abstract/document/10167687)
+  - **Perception**
+    - [Vision-and-Language Navigation: Interpreting Visually-Grounded Navigation Instructions in Real Environments](https://arxiv.org/pdf/1711.07280)
+    - [Convolutional autoencoder for feature extraction in tactile sensing](https://ieeexplore.ieee.org/abstract/document/8758942/)
+    - [Unsupervised adversarial domain adaptation for sim-to-real transfer of tactile images](https://ieeexplore.ieee.org/abstract/document/10106009/)
+    - [Vistac towards a unified multi-modal sensing finger for robotic manipulation](https://ieeexplore.ieee.org/abstract/document/10242327/)
+    - [Vision-Language Navigation Policy Learning and Adaptation](https://arxiv.org/pdf/https://ieeexplore.ieee.org/document/8986691)
+  - **Simulators**
+    - [AirSim: High-Fidelity Visual and Physical Simulation for Autonomous Vehicles](https://arxiv.org/pdf/1705.05065.pdf%20http://arxiv.org/abs/1705.05065)
+    - [MuJoCo: A physics engine for model-based control](https://ieeexplore.ieee.org/abstract/document/6386109/)
+    - [Matterport3D: Learning from rgb-d data in indoor environments,](https://arxiv.org/pdf/1709.06158)
+    - [VirtualHome: Simulating Household Activities Via Programs](http://openaccess.thecvf.com/content_cvpr_2018/papers/Puig_VirtualHome_Simulating_Household_CVPR_2018_paper.pdf)
+    - [AI2-THOR: An Interactive 3D Environment for Visual AI](https://arxiv.org/pdf/1712.05474)
+  - **Surveys**
+    - [The development of embodied cognition: Six lessons from babies](https://cogdev.sitehost.iu.edu/labwork/6_lessons.pdf)
+    - [All Robots in One: A New Standard and Unified Dataset for Versatile, General-Purpose Embodied Agents](https://arxiv.org/pdf/2408.10899)
+    - [A Survey of Embodied Learning for Object-Centric Robotic Manipulation](https://arxiv.org/pdf/2408.11537)
+    - [Teleoperation of Humanoid Robots: A Survey](https://arxiv.org/pdf/2301.04317)
+    - [A Survey of Robotic Navigation and Manipulation with Physics Simulators in the Era of Embodied AI](https://arxiv.org/pdf/2505.01458)
+- **scholar.bib**
+  - Collisionik: A per-instant pose optimization method for generating robot motions with environment collision avoidance
+- **Teleoperation**
+  - Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research
+  - DESERTS: Delay-Tolerant Semi-Autonomous Robot Teleoperation for Surgery
+  - Generative Model-Based Predictive Display for Robotic Teleoperation
+  - Shared Autonomy with Learned Latent Actions
+  - [da Vinci Surgical System White Papers](https://www.intuitive.com/en-us/healthcare-professionals/academics)
+- **Untitled**
+  - (no items)
+- **VLA**
+  - [A Survey on Vision-Language-Action Models: An Action Tokenization Perspective](http://arxiv.org/abs/2507.01925)
+  - [A Survey on Vision-Language-Action Models for Embodied AI](http://arxiv.org/abs/2405.14093)
+  - **Components_of_VLA**
+    - (no items)
+    - **Dynamics_Learning**
+      - [Video PreTraining (VPT): Learning to Act by Watching Unlabeled Online Videos](http://arxiv.org/abs/2206.11795v1)
+      - [PACT: Perception-Action Causal Transformer for Autoregressive Robotics Pre-Training](https://arxiv.org/abs/2209.11133)
+      - [Exploring Visual Pre-training for Robot Manipulation: Datasets, Models and Methods](https://arxiv.org/abs/2308.03620)
+      - [Mastering Robot Manipulation with Multimodal Prompts through Pretraining and Multi-task Fine-tuning](https://arxiv.org/abs/2310.09676)
+      - [SMART: Self-supervised Multi-task pretrAining with contRol Transformers](http://arxiv.org/abs/2301.09816v1)
+    - **Pretrained_Visual_Representations**
+      - [Theia: Distilling Diverse Vision Foundation Models for Robot Learning](http://arxiv.org/abs/2407.20179v2)
+      - [Robot Learning with Sensorimotor Pre-training](https://arxiv.org/abs/2306.10007)
+      - [DINOv2: Learning Robust Visual Features without Supervision](http://arxiv.org/abs/2304.07193v2)
+      - [VIP: Towards Universal Visual Reward and Representation via Value-Implicit Pre-Training](https://arxiv.org/abs/2210.00030)
+      - [Scaling Proprioceptive-Visual Learning with Heterogeneous Pre-trained Transformers](https://arxiv.org/abs/2409.20537)
+      - **Video_Representations**
+        - [UniGS: Unified Language-Image-3D Pretraining with Gaussian Splatting](http://arxiv.org/abs/2502.17860v2)
+        - [PhysGaussian: Physics-Integrated 3D Gaussians for Generative Dynamics](https://arxiv.org/abs/2311.12198)
+        - [Distilled Feature Fields Enable Few-Shot Language-Guided Manipulation](http://arxiv.org/abs/2308.07931v2)
+        - [That Sounds Right: Auditory Self-Supervision for Dynamic Robot Manipulation](http://arxiv.org/abs/2210.01116v1)
+    - **Quadruped_Robot**
+      - [MoRE: Unlocking Scalability in Reinforcement Learning for Quadruped Vision-Language-Action Models](https://arxiv.org/abs/2503.08007)
+      - [QUART-Online: Latency-Free Large Multimodal Language Model for Quadruped Robot Learning](https://arxiv.org/abs/2412.15576)
+      - [QUAR-VLA: Vision-Language-Action Model for Quadruped Robots](https://arxiv.org/abs/2502.14795)
+    - **Reasoning**
+      - [Robotic Control via Embodied Chain-of-Thought Reasoning](http://arxiv.org/abs/2407.08693v2)
+      - [Tree-Planner: Efficient Close-loop Task Planning with Large Language Models](https://arxiv.org/abs/2310.08582)
+      - [CoT-VLA: Visual Chain-of-Thought Reasoning for Vision-Language-Action Models](https://arxiv.org/abs/2503.22020)
+      - [RAT: Retrieval Augmented Thoughts Elicit Context-Aware Reasoning in Long-Horizon Generation](http://arxiv.org/abs/2403.05313v1)
+      - [ReAct: Synergizing Reasoning and Acting in Language Models](http://arxiv.org/abs/2210.03629v3)
+    - **Reinforcement_Learning**
+      - [Reflexion: Language Agents with Verbal Reinforcement Learning](http://arxiv.org/abs/2303.11366v4)
+      - [Decision Transformer: Reinforcement Learning via Sequence Modeling](https://arxiv.org/abs/2106.01345)
+      - [Primitive Skill-based Robot Learning from Human Evaluative Feedback](http://arxiv.org/abs/2307.15801v2)
+      - [Offline Reinforcement Learning as One Big Sequence Modeling Problem](http://arxiv.org/abs/2106.02039v4)
+    - **World_Models**
+      - [A Path Towards Autonomous Machine Intelligence Version 0.9.2, 2022-06-27](https://openreview.net/pdf?id=BZ5a1r-kVsf&)
+      - [Mastering Atari with Discrete World Models](http://arxiv.org/abs/2010.02193v4)
+      - [Dream to Control: Learning Behaviors by Latent Imagination](http://arxiv.org/abs/1912.01603v3)
+      - [Mastering Diverse Domains through World Models](http://arxiv.org/abs/2301.04104v2)
+      - [DayDreamer: World Models for Physical Robot Learning](http://arxiv.org/abs/2206.14176v1)
+      - **LLM_induced_World_Models**
+        - [Genie: Generative Interactive Environments](https://arxiv.org/abs/2402.15391)
+        - [LLM+P: Empowering Large Language Models with Optimal Planning Proficiency](http://arxiv.org/abs/2304.11477v3)
+        - [Reasoning with Language Model is Planning with World Model](https://arxiv.org/abs/2305.14992)
+        - [Large Language Models as Commonsense Knowledge for Large-Scale Task Planning](http://arxiv.org/abs/2305.14078v2)
+        - [Leveraging Pre-trained Large Language Models to Construct and Utilize World Models for Model-based Task Planning](http://arxiv.org/abs/2305.14909v2)
+      - **Visual_World_Models**
+        - [Genie: Generative Interactive Environments](https://arxiv.org/abs/2402.15391)
+        - [3D-VLA: A 3D Vision-Language-Action Generative World Model](https://arxiv.org/abs/2403.09631)
+        - [Language Models Meet World Models: Embodied Experiences Enhance Language Models](http://arxiv.org/abs/2305.10626v3)
+        - [Learning Interactive Real-World Simulators](https://arxiv.org/abs/2310.06114)
+  - **High-level_Task_Planners**
+    - (no items)
+    - **Modular_Task_Planners**
+      - (no items)
+      - **Code_based_Task_Planners**
+        - [Closed-Loop Open-Vocabulary Mobile Manipulation with GPT-4V](https://arxiv.org/abs/2404.10220)
+        - [ProgPrompt: Generating Situated Robot Task Plans using Large Language Models](http://arxiv.org/abs/2209.11302v1)
+        - [Code as Policies: Language Model Programs for Embodied Control](http://arxiv.org/abs/2209.07753v4)
+        - [ConceptGraphs: Open-Vocabulary 3D Scene Graphs for Perception and Planning](http://arxiv.org/abs/2309.16650v1)
+        - [Describe, Explain, Plan and Select: Interactive Planning with Large Language Models Enables Open-World Multi-Task Agents](http://arxiv.org/abs/2302.01560v3)
+      - **Language_based_Task_Planners**
+        - [Inner Monologue: Embodied Reasoning through Planning with Language Models](https://arxiv.org/abs/2207.05608)
+        - [Socratic Models: Composing Zero-Shot Multimodal Reasoning with Language](http://arxiv.org/abs/2204.00598v2)
+        - [LLM-Planner: Few-Shot Grounded Planning for Embodied Agents with Large Language Models](http://arxiv.org/abs/2212.04088v3)
+        - [Pre-Trained Language Models for Interactive Decision-Making](https://arxiv.org/abs/2202.01771)
+    - **Monolithic_Task_Planners**
+      - (no items)
+      - **End_to_end_Task_Planners**
+        - [PaLM-E: An Embodied Multimodal Language Model](http://arxiv.org/abs/2303.03378v1)
+        - [EmbodiedGPT: Vision-Language Pre-Training via Embodied Chain of Thought](http://arxiv.org/abs/2305.15021v2)
+      - **End_to_end_Task_Planners_with_3D_Vision**
+        - [An Embodied Generalist Agent in 3D World](http://arxiv.org/abs/2311.12871v3)
+        - [ShapeLLM: Universal 3D Object Understanding for Embodied Interaction](http://arxiv.org/abs/2402.17766v3)
+        - [3D-LLM: Injecting the 3D World into Large Language Models](http://arxiv.org/abs/2307.12981v1)
+        - [MultiPLY: A Multisensory Object-Centric Embodied Large Language Model in 3D World](http://arxiv.org/abs/2401.08577v1)
+      - **Grounded_Task_Planners**
+        - [Do As I Can, Not As I Say: Grounding Language in Robotic Affordances](http://arxiv.org/abs/2204.01691v2)
+        - [Language Models as Zero-Shot Planners: Extracting Actionable Knowledge for Embodied Agents](http://arxiv.org/abs/2201.07207v2)
+        - [Skill Induction and Planning with Latent Language](http://arxiv.org/abs/2110.01517v2)
+  - **Latest_Developments**
+    - [Mobility VLA: Multimodal Instruction Navigation with Long-Context VLMs and Topological Graphs](https://arxiv.org/abs/2407.07775)
+    - [LLaRA: Supercharging Robot Learning Data for Vision-Language Policy](https://arxiv.org/abs/2406.20095)
+    - **Dexterous_Hand**
+      - [DexGraspVLA: A Vision-Language-Action Framework Towards General Dexterous Grasping](https://arxiv.org/abs/2502.20900)
+    - **Humanoid_Robot**
+      - [Humanoid-VLA: Towards Universal Humanoid Control with Visual Integration](https://arxiv.org/abs/2312.14457)
+      - [GR00T N1: An Open Foundation Model for Generalist Humanoid Robots](https://arxiv.org/abs/2503.14734)
+  - **Low-level Control Policies**
+    - (no items)
+    - **Non_Transformer_Control_Policies**
+      - [Transporter Networks: Rearranging the Visual World for Robotic Manipulation](http://arxiv.org/abs/2010.14406v3)
+      - [What Matters in Language Conditioned Robotic Imitation Learning over Unstructured Data](http://arxiv.org/abs/2204.06252v2)
+      - [Grounding Language with Visual Affordances over Unstructured Data](http://arxiv.org/abs/2210.01911v3)
+      - [CLIPort: What and Where Pathways for Robotic Manipulation](http://arxiv.org/abs/2109.12098v1)
+      - [BC-Z: Zero-Shot Task Generalization with Robotic Imitation Learning](https://arxiv.org/abs/2202.02005)
+    - **Transformer_based_Control_Policies**
+      - [Instruction-driven history-aware policies for robotic manipulations](http://arxiv.org/abs/2209.04899v3)
+      - [Q-Transformer: Scalable Offline Reinforcement Learning via Autoregressive Q-Functions](http://arxiv.org/abs/2309.10150v2)
+      - [RoboAgent: Generalization and Efficiency in Robot Manipulation via Semantic Augmentations and Action Chunking](http://arxiv.org/abs/2309.01918v1)
+      - [RT-1: Robotics Transformer for Real-World Control at Scale](https://arxiv.org/abs/2212.06817)
+      - [Interactive Language: Talking to Robots in Real Time](http://arxiv.org/abs/2210.06407v1)
+      - **Control_Policies_for_Motion_Planning**
+        - [RoboTAP: Tracking Arbitrary Points for Few-Shot Visual Imitation](https://arxiv.org/abs/2308.15975)
+        - [Correcting Robot Plans with Natural Language Feedback](http://arxiv.org/abs/2204.05186v1)
+        - [VoxPoser: Composable 3D Value Maps for Robotic Manipulation with Language Models](http://arxiv.org/abs/2307.05973v2)
+      - **Control_Policies_for_Multimodal_Instructions**
+        - [Open-World Object Manipulation using Pre-trained Vision-Language Models](https://arxiv.org/abs/2303.00905)
+        - [VIMA: General Robot Manipulation with Multimodal Prompts](http://arxiv.org/abs/2210.03094v2)
+      - **Control_Policies_with_3D_Vision**
+        - [Act3D: 3D Feature Field Transformers for Multi-Task Robotic Manipulation](http://arxiv.org/abs/2306.17817v2)
+        - [RVT: Robotic View Transformer for 3D Object Manipulation](http://arxiv.org/abs/2306.14896v1)
+        - [Perceiver-Actor: A Multi-Task Transformer for Robotic Manipulation](http://arxiv.org/abs/2209.05451v2)
+        - [RoboUniView: Visual-Language Model with Unified View Representation for Robotic Manipulaiton](https://github.com/liufanfanlff/RoboUniview)
+        - [RVT-2: Learning Precise Manipulation from Few Demonstrations](http://arxiv.org/abs/2406.08545v1)
+      - **Control_Policies_with_Point_based_Action**
+        - [PIVOT: Iterative Visual Prompting Elicits Actionable Knowledge for VLMs](http://arxiv.org/abs/2402.07872v1)
+        - [RoboPoint: A Vision-Language Model for Spatial Affordance Prediction for Robotics](http://arxiv.org/abs/2406.10721v1)
+        - [ReKep: Spatio-Temporal Reasoning of Relational Keypoint Constraints for Robotic Manipulation](http://arxiv.org/abs/2409.01652v2)
+      - **Diffusion_based_Control_Policies_with_3D_Vision**
+        - [3D Diffusion Policy: Generalizable Visuomotor Policy Learning via Simple 3D Representations](http://arxiv.org/abs/2403.03954v7)
+        - [3D Diffuser Actor: Policy Diffusion with 3D Scene Representations](http://arxiv.org/abs/2402.10885v3)
+      - **Large_VLA**
+        - [DreamVLA: A Vision-Language-Action Model Dreamed with Comprehensive World Knowledge](https://arxiv.org/abs/2507.04447)
+        - [UP-VLA: A Unified Understanding and Prediction Model for Embodied Agent](https://arxiv.org/abs/2501.18867)
+        - [SmolVLA: A Vision-Language-Action Model for Affordable and Efficient Robotics](https://arxiv.org/abs/2506.01844)
+        - [Unified Vision-Language-Action Model](https://arxiv.org/abs/2506.19850)
+        - [WorldVLA: Towards Autoregressive Action World Model](https://arxiv.org/abs/2506.21539)
+      - **Policies_Diffusion_based_Control_Policies**
+        - [Octo: An Open-Source Generalist Robot Policy](https://arxiv.org/abs/2405.12213)
+        - [Diffusion Policy: Visuomotor Policy Learning via Action Diffusion](http://arxiv.org/abs/2303.04137v5)
+        - [RDT-1B: a Diffusion Foundation Model for Bimanual Manipulation](http://arxiv.org/abs/2410.07864v2)
+        - [Multimodal Diffusion Transformer: Learning Versatile Behavior from Multimodal Goals](http://arxiv.org/abs/2407.05996v1)
+        - [Scaling Diffusion Policy in Transformer to 1 Billion Parameters for Robotic Manipulation](https://arxiv.org/abs/2409.14411)
+  - **Surveys**
+    - [Is Sora a World Simulator? A Comprehensive Survey on General World Models and Beyond](http://arxiv.org/abs/2405.03520v1)
+    - [Large Language Models for Robotics: Opportunities, Challenges, and Perspectives](https://arxiv.org/abs/2401.04334)
+    - [Foundation Models in Robotics: Applications, Challenges, and the Future](http://arxiv.org/abs/2312.07843v1)
+    - [Toward General-Purpose Robots via Foundation Models: A Survey and Meta-Analysis](http://arxiv.org/abs/2312.08782v3)
+    - [Real-World Robot Applications of Foundation Models: A Review](http://arxiv.org/abs/2402.05741v2)
+- **机械臂**
+  - [Learning a Unified Policy for Position and Force Control in Legged Loco-Manipulation](http://arxiv.org/abs/2505.20829)
+  - [Research on Impendence Control of an Upper Limb Exoskeleton Robot and Joint Experiments](http://www.cjmenet.com.cn/CN/10.3901/JME.2020.19.200)

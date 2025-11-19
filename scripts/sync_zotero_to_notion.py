@@ -105,6 +105,17 @@ class ZoteroAPI:
             params = None
         return out
 
+    def list_child_collections(self, parent_key: str) -> List[Dict[str, Any]]:
+        url = f"{self.base}/collections/{parent_key}/collections"
+        params = {"format": "json", "include": "data", "limit": 200}
+        out: List[Dict[str, Any]] = []
+        resp = self.session.get(url, params=params)
+        resp.raise_for_status()
+        for entry in resp.json():
+            data = entry.get("data", {})
+            out.append({"key": entry.get("key"), "name": data.get("name"), "parent": data.get("parentCollection")})
+        return out
+
 
 class NotionAPI:
     def __init__(self, api_key: str, database_id: str) -> None:
@@ -197,6 +208,7 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--debug", action="store_true", help="Print debug info (property mapping, payload) on errors.")
     ap.add_argument("--enrich-with-doubao", action="store_true", help="Use Doubao (ARK) to extract Key Contributions/Limitations and categorize fields strictly from title/abstract/notes.")
     ap.add_argument("--doubao-max-chars", type=int, default=4000, help="Max characters to send to Doubao for extraction.")
+    ap.add_argument("--recursive", action="store_true", help="When a collection is given, include items from all descendant sub-collections.")
     return ap.parse_args()
 
 
@@ -239,6 +251,31 @@ def resolve_collection_key(zot: ZoteroAPI, name: Optional[str], key: Optional[st
             print(f"[INFO] Resolved collection '{cname}' → {info['key']}")
             return info["key"]
     raise SystemExit(f"Collection named '{name}' not found.")
+
+
+def iter_collection_tree_items(zot: ZoteroAPI, root_key: str, tag: Optional[str], limit: Optional[int]) -> Iterable[Dict[str, Any]]:
+    """Depth-first traversal collecting top-level items from root and all descendants.
+    De-duplicates by item key across collections.
+    """
+    seen_items: set = set()
+    stack: List[str] = [root_key]
+    yielded = 0
+    cap = limit if (limit and limit > 0) else None
+    while stack:
+        ck = stack.pop()
+        # items at this collection
+        for entry in zot.iter_items(ck, tag, 0 if cap is None else max(0, cap - yielded) or 0):
+            key = entry.get("key")
+            if key in seen_items:
+                continue
+            seen_items.add(key)
+            yield entry
+            yielded += 1
+            if cap is not None and yielded >= cap:
+                return
+        # push children
+        for child in zot.list_child_collections(ck):
+            stack.append(child["key"])
 
 
 def build_property_mapping(db: Dict[str, Any]) -> Dict[str, Dict[str, str]]:
@@ -588,7 +625,14 @@ def main() -> None:
     if since_days:
         cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=since_days)
 
-    for entry in zot.iter_items(collection_key, args.tag, limit or 1000000):
+    # Choose iterator: recursive collection tree or flat
+    iterator: Iterable[Dict[str, Any]]
+    if collection_key and args.recursive:
+        iterator = iter_collection_tree_items(zot, collection_key, args.tag, limit or 1000000)
+    else:
+        iterator = zot.iter_items(collection_key, args.tag, limit or 1000000)
+
+    for entry in iterator:
         data = entry.get("data", {})
         if data.get("itemType") in {"note", "attachment"}:
             continue

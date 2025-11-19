@@ -1,0 +1,24 @@
+{
+  "properties": {
+    "Paper Title": { "title": {} },
+    "Authors": { "multi_select": {} },
+    "Year": { "number": {} },
+    "Venue": { "select": {} },
+    "Abstract": { "rich_text": {} },
+    "Tags": { "multi_select": {} },
+    "Research Area": { "multi_select": {} },
+    "Model Type": { "multi_select": {} },
+    "Robot Platform": { "multi_select": {} },
+    "Tasks": { "multi_select": {} },
+    "Datasets / Benchmarks": { "multi_select": {} },
+    "Project Page": { "url": {} },
+    "Code": { "url": {} },
+    "Video": { "url": {} },
+    "Key Contributions": { "rich_text": {} },
+    "Limitations": { "rich_text": {} },
+    "My Notes": { "rich_text": {} },
+    "Relevance": { "number": {} },
+    "Status": { "select": {} },
+    "Related Project": { "relation": {} }
+  }
+}
