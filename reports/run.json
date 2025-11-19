@@ -1,8 +1,8 @@
 {
-  "started_at": "2025-11-17T17:45:42.276759",
+  "started_at": "2025-11-19T20:34:44.196846",
   "params": {
-    "since_days": 1000,
-    "top_k": 10,
+    "since_days": 10,
+    "top_k": 20,
     "min_score": 0.3,
     "create_collections": true,
     "fill_missing": false,
@@ -17,27 +17,27 @@
     },
     "sim2real": {
       "label": "sim2real｜模拟到现实",
-      "candidates": 50,
+      "candidates": 4,
       "added": 0,
-      "skipped": 10
+      "skipped": 2
     },
     "teleoperation": {
       "label": "teleoperation｜遥操作",
-      "candidates": 50,
+      "candidates": 14,
       "added": 0,
-      "skipped": 10
+      "skipped": 5
     },
     "robotic_navigation": {
       "label": "robotic_navigation｜机器人导航",
-      "candidates": 50,
+      "candidates": 100,
       "added": 0,
-      "skipped": 10
+      "skipped": 20
     },
     "robotic_manipulation": {
       "label": "robotic_manipulation｜机器人操作",
-      "candidates": 50,
+      "candidates": 100,
       "added": 0,
-      "skipped": 10
+      "skipped": 20
     },
     "robotic_grasping": {
       "label": "robotic_grasping｜机器人抓取",
@@ -47,21 +47,21 @@
     },
     "vision_language_model": {
       "label": "vision_language_model｜视觉语言模型",
-      "candidates": 85,
+      "candidates": 162,
       "added": 0,
-      "skipped": 10
+      "skipped": 20
     },
     "vision_language_action_model": {
       "label": "vision_language_action_model｜视觉语言动作模型",
-      "candidates": 73,
-      "added": 0,
+      "candidates": 35,
+      "added": 7,
       "skipped": 10
     },
     "large_language_model": {
       "label": "large_language_model｜大语言模型",
-      "candidates": 50,
+      "candidates": 100,
       "added": 0,
-      "skipped": 10
+      "skipped": 20
     },
     "foundation_model": {
       "label": "foundation_model｜基础模型",
@@ -77,9 +77,9 @@
     },
     "humanoid_robot": {
       "label": "humanoid_robot｜类人机器人",
-      "candidates": 50,
+      "candidates": 5,
       "added": 0,
-      "skipped": 10
+      "skipped": 4
     },
     "quadruped_robot": {
       "label": "quadruped_robot｜四足机器人",
@@ -95,9 +95,9 @@
     },
     "reinforcement_learning": {
       "label": "reinforcement_learning｜强化学习",
-      "candidates": 50,
+      "candidates": 100,
       "added": 0,
-      "skipped": 10
+      "skipped": 20
     },
     "imitation_learning": {
       "label": "imitation_learning｜模仿学习",
@@ -113,9 +113,9 @@
     },
     "simulator": {
       "label": "simulator｜仿真平台",
-      "candidates": 133,
+      "candidates": 112,
       "added": 0,
-      "skipped": 10
+      "skipped": 20
     },
     "motion_planning": {
       "label": "motion_planning｜运动规划",
@@ -125,9 +125,9 @@
     },
     "task_planning": {
       "label": "task_planning｜任务规划",
-      "candidates": 50,
+      "candidates": 53,
       "added": 0,
-      "skipped": 10
+      "skipped": 20
     },
     "code_based_task_planning": {
       "label": "code_based_task_planning｜代码任务规划",
@@ -155,9 +155,9 @@
     },
     "transformer_policy": {
       "label": "transformer_policy｜Transformer控制策略",
-      "candidates": 50,
+      "candidates": 1,
       "added": 0,
-      "skipped": 10
+      "skipped": 0
     },
     "diffusion_policy": {
       "label": "diffusion_policy｜扩散策略学习",
@@ -185,11 +185,11 @@
     }
   },
   "summary": {
-    "candidates": 0,
-    "added": 0,
-    "skipped": 120,
+    "candidates": 7,
+    "added": 7,
+    "skipped": 161,
     "updated": 0
   },
   "errors": [],
-  "finished_at": "2025-11-17T17:53:33.659005"
+  "finished_at": "2025-11-19T20:43:49.364935"
 }

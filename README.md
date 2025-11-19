@@ -76,6 +76,8 @@ PY
   `python scripts/watch_and_import_papers.py --tags ./tag.json --since-days 14 --top-k 10 --min-score 0.3 --create-collections --dry-run`
 - 生成日志与报告：
   `python scripts/watch_and_import_papers.py --tags ./tag.json --since-days 14 --top-k 10 --min-score 0.3 --create-collections --log-file logs/run.log --report-json reports/run.json`
+- 补救已有条目：
+  `--fill-missing` 会在命中重复时，把缺失的摘要/DOI/URL/年份补写回 Zotero，并把条目加入当前标签对应的 Collection + 标签。
 
 7) 同步到 Notion（可选，支持豆包严格抽取补全）
 - 预览：

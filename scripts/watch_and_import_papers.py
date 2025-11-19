@@ -147,6 +147,11 @@ class ZoteroAPI:
         resp = self.session.post(f"{self.base}/items", json=payload)
         resp.raise_for_status()
 
+    def update_item(self, entry: Dict[str, Any], new_data: Dict[str, Any]) -> None:
+        headers = {"If-Unmodified-Since-Version": str(entry.get("version"))}
+        resp = self.session.put(f"{self.base}/items/{entry['key']}", json=new_data, headers=headers)
+        resp.raise_for_status()
+
 
 def normalize_title(s: Optional[str]) -> str:
     if not s:
@@ -188,11 +193,38 @@ class Candidate:
         return f"t:{normalize_title(self.title)}"
 
 
-def build_library_index(zot: ZoteroAPI) -> Dict[str, Set[str]]:
+def normalized_url(url: Optional[str]) -> Optional[str]:
+    if not url:
+        return None
+    from urllib.parse import urlsplit
+
+    stripped = url.strip()
+    if not stripped:
+        return None
+    parts = urlsplit(stripped)
+    if not parts.scheme or not parts.netloc:
+        return None
+    return f"{parts.scheme}://{parts.netloc}{parts.path}".lower().rstrip("/")
+
+
+def candidate_ty_key(cand: Candidate) -> Optional[str]:
+    if not cand.title or not cand.year:
+        return None
+    title_norm = normalize_title(cand.title)
+    if not title_norm:
+        return None
+    return f"{title_norm}|{cand.year}"
+
+
+def build_library_index(zot: ZoteroAPI) -> Dict[str, Any]:
     doi_set: Set[str] = set()
     arxiv_set: Set[str] = set()
     url_set: Set[str] = set()
     ty_set: Set[str] = set()
+    by_doi: Dict[str, Dict[str, Any]] = {}
+    by_arxiv: Dict[str, Dict[str, Any]] = {}
+    by_url: Dict[str, Dict[str, Any]] = {}
+    by_ty: Dict[str, Dict[str, Any]] = {}
     for entry in zot.iter_top_items():
         data = entry.get("data", {})
         if data.get("itemType") in {"note", "attachment"}:
@@ -200,35 +232,129 @@ def build_library_index(zot: ZoteroAPI) -> Dict[str, Set[str]]:
         doi = (data.get("DOI") or data.get("doi") or "").strip().lower()
         if doi:
             doi_set.add(doi)
+            by_doi.setdefault(doi, entry)
         url = (data.get("url") or "").strip()
         if url:
             from urllib.parse import urlsplit
 
             parts = urlsplit(url)
-            url_set.add(f"{parts.scheme}://{parts.netloc}{parts.path}".lower().rstrip("/"))
+            norm_url = f"{parts.scheme}://{parts.netloc}{parts.path}".lower().rstrip("/")
+            url_set.add(norm_url)
+            by_url.setdefault(norm_url, entry)
         title = normalize_title(data.get("title"))
         year = data.get("year") or (data.get("date") or "")[:4]
         if title and year:
-            ty_set.add(f"{title}|{year}")
+            ty_key = f"{title}|{year}"
+            ty_set.add(ty_key)
+            by_ty.setdefault(ty_key, entry)
         # try to detect arxiv id from url
         import re as _re
 
         m = _re.search(r"arxiv\.org/(?:abs|pdf)/([A-Za-z0-9.\-]+)", url or "")
         if m:
-            arxiv_set.add(m.group(1))
-    return {"doi": doi_set, "arxiv": arxiv_set, "url": url_set, "ty": ty_set}
+            arc = m.group(1)
+            arxiv_set.add(arc)
+            by_arxiv.setdefault(arc, entry)
+    return {
+        "doi": doi_set,
+        "arxiv": arxiv_set,
+        "url": url_set,
+        "ty": ty_set,
+        "by_doi": by_doi,
+        "by_arxiv": by_arxiv,
+        "by_url": by_url,
+        "by_ty": by_ty,
+    }
+
+
+def find_existing_entry(idx: Dict[str, Any], cand: Candidate) -> Optional[Dict[str, Any]]:
+    if cand.doi and cand.doi in idx["by_doi"]:
+        return idx["by_doi"].get(cand.doi)
+    if cand.arxiv_id and cand.arxiv_id in idx["by_arxiv"]:
+        return idx["by_arxiv"].get(cand.arxiv_id)
+    url_key = normalized_url(cand.url)
+    if url_key and url_key in idx["by_url"]:
+        return idx["by_url"].get(url_key)
+    ty_key = candidate_ty_key(cand)
+    if ty_key and ty_key in idx["by_ty"]:
+        return idx["by_ty"].get(ty_key)
+    return None
+
+
+def enrich_existing_entry(
+    zot: ZoteroAPI,
+    entry: Dict[str, Any],
+    cand: Candidate,
+    label: str,
+    collection_key: Optional[str],
+    log_fn,
+) -> bool:
+    data = entry.get("data", {})
+    new_data = data.copy()
+    changed_fields: List[str] = []
+
+    def mark(field: str) -> None:
+        if field not in changed_fields:
+            changed_fields.append(field)
+
+    abstract_existing = (new_data.get("abstractNote") or "").strip()
+    if cand.abstract and not abstract_existing:
+        new_data["abstractNote"] = cand.abstract
+        mark("abstract")
+    doi_existing = (new_data.get("DOI") or new_data.get("doi") or "").strip()
+    if cand.doi and not doi_existing:
+        new_data["DOI"] = cand.doi
+        mark("doi")
+    url_existing = (new_data.get("url") or "").strip()
+    if cand.url and not url_existing:
+        new_data["url"] = cand.url
+        mark("url")
+    year_existing = new_data.get("year")
+    if cand.year and not year_existing:
+        new_data["year"] = cand.year
+        mark("year")
+
+    collections = list(new_data.get("collections") or [])
+    if collection_key and collection_key not in collections:
+        collections.append(collection_key)
+        new_data["collections"] = collections
+        mark("collection")
+
+    tags = list(new_data.get("tags") or [])
+    if label and not any((t or {}).get("tag") == label for t in tags):
+        tags.append({"tag": label})
+        new_data["tags"] = tags
+        mark("tag")
+
+    if not changed_fields:
+        return False
+    zot.update_item(entry, new_data)
+    entry["data"] = new_data
+    log_fn(
+        f"[FILL] Updated existing item {entry['key']} with {', '.join(changed_fields)} "
+        f"derived from '{cand.title[:80]}'"
+    )
+    return True
 
 
 def compute_score(now: dt.datetime, cand: Candidate, max_days: int, cit: Optional[int], inf_cit: Optional[int]) -> float:
     # Recency score: 1.0 when today, decays to 0 at max_days
     recency = 0.0
+    max_days = max(max_days or 0, 1)
+    ref_date: Optional[dt.datetime] = None
     if cand.date:
         try:
-            d = dt.datetime.fromisoformat(cand.date + "T00:00:00+00:00")
-            days = max(0, (now - d).days)
-            recency = max(0.0, 1.0 - min(days, max_days) / max_days)
+            ref_date = dt.datetime.fromisoformat(cand.date + "T00:00:00+00:00")
         except Exception:
-            pass
+            ref_date = None
+    if not ref_date and cand.year:
+        try:
+            ref_date = dt.datetime(int(cand.year), 1, 1, tzinfo=dt.timezone.utc)
+        except Exception:
+            ref_date = None
+    if ref_date:
+        days = max(0, (now - ref_date).days)
+        recency = max(0.0, 1.0 - min(days, max_days) / max_days)
     # Citation normalization with soft cap
     def norm(x: Optional[int], cap: int) -> float:
         if x is None:
@@ -318,7 +444,7 @@ def main() -> None:
         keywords = cfg.get("sample_keywords") or []
         if not keywords:
             continue
-        report["tags"][tag_key] = {"label": label, "candidates": 0, "added": 0, "skipped": 0}
+        report["tags"][tag_key] = {"label": label, "candidates": 0, "added": 0, "skipped": 0, "updated": 0}
         log(f"[TAG] {tag_key} '{label}' keywords={len(keywords)}")
 
         # Fetch candidates from arXiv
@@ -397,15 +523,18 @@ def main() -> None:
         # Import selected
         for cand in selected:
             ident = cand.identity()
-            # dedupe against library and current run
-            if (cand.doi and cand.doi in idx["doi"]) or (
-                cand.arxiv_id and cand.arxiv_id in idx["arxiv"]
-            ) or (
-                cand.url and cand.url.lower().rstrip("/") in idx["url"]
-            ) or (
-                cand.title and cand.year and f"{normalize_title(cand.title)}|{cand.year}" in idx["ty"]
-            ) or (ident in created_identities):
+            existing_entry = find_existing_entry(idx, cand)
+            duplicate_in_library = existing_entry is not None
+            duplicate_in_run = ident in created_identities
+            if duplicate_in_library or duplicate_in_run:
                 log(f"[SKIP] duplicate {cand.title[:80]} ({ident})")
+                if args.fill_missing and existing_entry:
+                    try:
+                        if enrich_existing_entry(zot, existing_entry, cand, label, collection_key, log):
+                            report["tags"][tag_key]["updated"] += 1
+                            report["summary"]["updated"] += 1
+                    except Exception as exc:
+                        log(f"[WARN] Failed to enrich existing item {existing_entry['key']}: {exc}")
                 report["tags"][tag_key]["skipped"] += 1
                 report["summary"]["skipped"] += 1
                 continue
