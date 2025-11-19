@@ -120,6 +120,26 @@ scripts/ai_toolbox_pipeline.sh --watch-import --notion-sync --dry-run
 # --notion-skip-untitled  --notion-doubao
 ```
 
+## LangChain 自动化流程（Python 版）
+
+如果希望在 Python 内部以 LangChain 可组合的方式运行整条流水线，可使用新的 `scripts/langchain_pipeline.py`：
+
+```bash
+python scripts/langchain_pipeline.py \
+  --collection-name "Embodied AI" \
+  --watch-since-days 14 \
+  --watch-top-k 15 \
+  --summary-limit 150 \
+  --abstract-limit 400 \
+  --notion-limit 500 \
+  --state-json logs/langchain_pipeline_state.json
+```
+
+- 流程阶段：追踪导入 → 去重 → AI 摘要 → 补全摘要 → Notion 同步；使用 `--skip-*` 可任意跳过某个阶段。
+- `--tag-file` 共享 `tag.json` 体系用于打分筛选和 Notion 标签映射；`--collection-name/--collection-key` 会自动作用于除 watch 以外的阶段。
+- LangChain 会串联每个 stage 的 `RunnableLambda`，执行完成后会把日志/报告路径写入 JSON（通过 `--state-json` 导出），方便与其他 LangChain/Agentflow 继续衔接。
+- 该脚本内部直接调用各 Python 子脚本，保持与 CLI 版本完全一致的行为，仅提供自动化编排能力。
+
 ## import_embodied_ai_to_zotero.py
 
 从 HCPLab 的 Embodied_AI_Paper_List README 解析条目，输出 RIS 或直接写入 Zotero。

@@ -1,5 +1,6 @@
 requests>=2.28
 pypdf>=4.0
 openai>=1.0
+langchain-core>=0.3.10
 # Optional, for local Markdown rendering in notes
 markdown>=3.5
