@@ -11,6 +11,7 @@ the first successful hit back to Zotero. Use --dry-run to preview changes.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import html
 import os
 import re
@@ -68,6 +69,17 @@ def extract_arxiv_id(url: Optional[str]) -> Optional[str]:
     return None
 
 
+def parse_iso(value: Optional[str]) -> Optional[dt.datetime]:
+    if not value:
+        return None
+    try:
+        if value.endswith("Z"):
+            value = value[:-1] + "+00:00"
+        return dt.datetime.fromisoformat(value)
+    except Exception:
+        return None
+
+
 def strip_tags(text: str) -> str:
     text = html.unescape(text or "")
     text = re.sub(r"<\s*/\s*p\s*>", "\n\n", text, flags=re.IGNORECASE)
@@ -85,6 +97,7 @@ class MetaAbstractParser(HTMLParser):
         self.abstract: Optional[str] = None
 
     def handle_starttag(self, tag: str, attrs: List[tuple]) -> None:  # type: ignore[override]
+        # Many publisher pages expose short abstracts via <meta name="citation_abstract"> etc.
         if tag.lower() != "meta" or self.abstract:
             return
         attr_map = {k.lower(): v for k, v in attrs if v}
@@ -281,6 +294,12 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--tag", help="Only process items that contain this tag.")
     ap.add_argument("--limit", type=int, default=0, help="Max number of items to scan (<=0 means no limit).")
     ap.add_argument("--dry-run", action="store_true", help="Preview updates without modifying Zotero.")
+    ap.add_argument(
+        "--modified-since-hours",
+        type=float,
+        default=24.0,
+        help="Only touch items modified within the last N hours (default 24).",
+    )
     return ap.parse_args()
 
 
@@ -311,15 +330,18 @@ def enrich_item(entry: Dict[str, Any]) -> Optional[Dict[str, str]]:
     url = data.get("url")
     semantic_rate_limited = False
 
+    # Try cheap wins first: embedded DOI/arXiv in the URL itself.
     url_result = fetch_url_abstract(url, doi, arxiv_id)
     if url_result:
         return url_result
 
+    # Next prefer CrossRef because it often has structured abstracts.
     if doi:
         abstract = fetch_crossref_abstract(doi)
         if abstract:
             return {"source": "CrossRef", "text": abstract}
 
+    # Semantic Scholar offers both DOI and arXiv lookups; once they rate limit us we stop calling.
     if doi and not semantic_rate_limited:
         abstract = fetch_semantic_scholar_abstract("DOI", doi)
         if abstract == "RATE_LIMIT":
@@ -354,12 +376,19 @@ def main() -> None:
     scanned = 0
     updated = 0
     skipped = 0
+    cutoff = None
+    if args.modified_since_hours and args.modified_since_hours > 0:
+        cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=args.modified_since_hours)
 
     for entry in api.iter_items(collection_key, args.tag, limit):
         scanned += 1
         data = entry["data"]
         if data.get("itemType") in {"note", "attachment"}:
             continue
+        if cutoff:
+            dm = parse_iso(data.get("dateModified"))
+            if dm and dm < cutoff:
+                continue
         if has_abstract(data):
             continue
         result = enrich_item(entry)

@@ -4,6 +4,35 @@
 
 English version: see `README_EN.md`.
 
+## 代码文件速览
+
+| 路径 | 作用简述 |
+| --- | --- |
+| `scripts/watch_and_import_papers.py` | 根据 `tag.json` 关键词追踪新论文、打分筛选并写入 Zotero，可选填补重复条目的缺失字段。 |
+| `scripts/fetch_missing_pdfs.py` | 扫描最近新增的 Zotero 条目，自动下载/关联 PDF（arXiv/Unpaywall/直链）以补全本地库。 |
+| `scripts/merge_zotero_duplicates.py` | 扫描库内重复条目，保留最优版本并迁移附件/笔记后删除冗余。 |
+| `scripts/summarize_zotero_with_doubao.py` | 读取 Zotero PDF，通过豆包模型生成摘要，支持写回 Notes。 |
+| `scripts/enrich_zotero_abstracts.py` | 对缺少 `abstractNote` 的条目调用 CrossRef/Semantic Scholar/arXiv 补充摘要。 |
+| `scripts/list_zotero_collections.py` | 枚举 Zotero Collection 及其树结构，可选列出子项。 |
+| `scripts/import_ris_folder.py` | 遍历文件夹中所有 RIS 文件并批量导入 Zotero。 |
+| `scripts/import_embodied_ai_to_zotero.py` | 解析 Embodied_AI_Paper_List README，生成 RIS 或直接创建条目。 |
+| `scripts/awesome_vla_to_ris.py` | 解析 Awesome-VLA README，按分类生成 RIS/调用 API。 |
+| `scripts/delete_collection_notes.py` | 清理指定集合下的 Notes。 |
+| `scripts/ai_toolbox_pipeline.sh` | Bash 版一键流水线，串联去重/摘要/补全/监控/同步等阶段。 |
+| `scripts/langchain_pipeline.py` | Python & LangChain 版本的自动化入口，可与 Agentflow 集成。 |
+| `scripts/sync_zotero_to_notion.py` | 将 Zotero 条目映射到 Notion 数据库，支持 Doubao 严格抽取。 |
+| `paperflow/config.py` | LangChain 流水线配置数据类，集中管理各阶段参数。 |
+| `paperflow/stages.py` | 具体的子流程实现，负责编排并调用 scripts 下的 CLI。 |
+| `paperflow/pipeline.py` | 构建/运行 LangChain Runnable 链，输出 `PipelineState`。 |
+| `paperflow/state.py` | 定义流水线的阶段执行结果与摘要结构。 |
+| `utils_sources.py` | watch/import 与摘要脚本共用的外部数据抓取与工具函数。 |
+| `tag.json` | 标签体系定义（label/description/关键词），用于自动打标签和 collection 映射。 |
+| `tag_schema.json` | Notion 数据库属性示意，用于同步脚本的字段映射。 |
+| `requirements.txt` | 运行所需 Python 依赖列表。 |
+| `exp.example` | 环境变量示例文件，复制为 `exp` 后填入密钥。 |
+
+> 其他 Markdown/日志/报告文件用于记录运行结果或导出的数据。
+
 ## 环境准备
 
 ```bash
@@ -71,15 +100,18 @@ PY
 - 全库：`python scripts/enrich_zotero_abstracts.py`
 - 指定集合：`python scripts/enrich_zotero_abstracts.py --collection-name "Embodied AI" --limit 100`
 
-6) 追踪新论文并自动入库（按 tag.json 打分筛选）
+6) 追踪新论文并自动入库（按 tag.json 打分筛选，默认仅关注最近 24 小时）
 - 预览：
-  `python scripts/watch_and_import_papers.py --tags ./tag.json --since-days 14 --top-k 10 --min-score 0.3 --create-collections --dry-run`
+  `python scripts/watch_and_import_papers.py --tags ./tag.json --since-hours 24 --top-k 10 --min-score 0.3 --create-collections --dry-run`
 - 生成日志与报告：
-  `python scripts/watch_and_import_papers.py --tags ./tag.json --since-days 14 --top-k 10 --min-score 0.3 --create-collections --log-file logs/run.log --report-json reports/run.json`
 - 补救已有条目：
   `--fill-missing` 会在命中重复时，把缺失的摘要/DOI/URL/年份补写回 Zotero，并把条目加入当前标签对应的 Collection + 标签。
 
-7) 同步到 Notion（可选，支持豆包严格抽取补全）
+7) 自动补全 PDF（默认最近 24 小时）
+- 基于 watch 输出执行：`python scripts/fetch_missing_pdfs.py --since-hours 24 --new-items-json .data/new_items_watch.json`
+- 或直接按时间窗口扫描：`python scripts/fetch_missing_pdfs.py --since-hours 12 --limit 50`
+
+8) 同步到 Notion（可选，支持豆包严格抽取补全）
 - 预览：
   `python scripts/sync_zotero_to_notion.py --since-days 30 --limit 200 --tag-file ./tag.json --skip-untitled --dry-run`
 - 指定集合并递归子集合、启用豆包抽取：
@@ -138,6 +170,7 @@ python scripts/langchain_pipeline.py \
 ```
 
 - 流程阶段：追踪导入 → 去重 → AI 摘要 → 补全摘要 → Notion 同步；使用 `--skip-*` 可任意跳过某个阶段。
+- 默认仅处理最近 24 小时新增/更新的数据，可通过 `--watch-since-hours`、`--pdf-since-hours`、`--summary-modified-since-hours` 等参数覆盖。
 - `--tag-file` 共享 `tag.json` 体系用于打分筛选和 Notion 标签映射；`--collection-name/--collection-key` 会自动作用于除 watch 以外的阶段。
 - LangChain 会串联每个 stage 的 `RunnableLambda`，执行完成后会把日志/报告路径写入 JSON（通过 `--state-json` 导出），方便与其他 LangChain/Agentflow 继续衔接。
 - 该脚本内部直接调用各 Python 子脚本，保持与 CLI 版本完全一致的行为，仅提供自动化编排能力。

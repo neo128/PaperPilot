@@ -200,7 +200,8 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--collection", help="Zotero collection key.")
     ap.add_argument("--collection-name", help="Zotero collection name (resolve to key).")
     ap.add_argument("--tag", help="Only sync items with this tag.")
-    ap.add_argument("--since-days", type=int, default=0, help="Only sync items modified within last N days.")
+    ap.add_argument("--since-days", type=int, default=0, help="Deprecated. Prefer --since-hours for finer control.")
+    ap.add_argument("--since-hours", type=float, default=24.0, help="Only sync items modified within last N hours (default 24).")
     ap.add_argument("--limit", type=int, default=200, help="Max number of items to consider (<=0 means unlimited).")
     ap.add_argument("--tag-file", default="tag.json", help="Tag schema JSON path (for auto Tags).")
     ap.add_argument("--dry-run", action="store_true", help="Preview actions without writing to Notion.")
@@ -316,6 +317,7 @@ def build_property_mapping(db: Dict[str, Any]) -> Dict[str, Dict[str, str]]:
     for key, names in exact_candidates.items():
         for name in names:
             if name in props:
+                # Each property may exist with CN/EN label; pick the first match to keep type fidelity.
                 mapping[key] = {"name": name, "type": props[name].get("type")}
                 break
     return mapping
@@ -456,7 +458,7 @@ def make_properties(item: Dict[str, Any], mapping: Dict[str, Dict[str, str]], la
     url = data.get("url") or ""
     doi = data.get("DOI") or data.get("doi") or ""
     zot_key = data.get("key") or item.get("key") or ""
-    # arXiv/links extraction for Code/Video/Project Page
+    # arXiv/links extraction for Code/Video/Project Page — use a best-effort regex pass.
     github = None
     video = None
     # extract links from url/abstract
@@ -486,7 +488,7 @@ def make_properties(item: Dict[str, Any], mapping: Dict[str, Dict[str, str]], la
     except Exception:
         pass
 
-    # Merge Zotero tag names with auto labels (optional)
+    # Merge Zotero tag names with auto labels (optional) so Notion stays in sync with both manual and inferred tags.
     zot_tags = [t.get("tag") for t in (data.get("tags") or []) if t.get("tag")]
     all_labels = list({*labels, *zot_tags}) if labels or zot_tags else []
 
@@ -603,6 +605,7 @@ def main() -> None:
     collection_key = resolve_collection_key(zot, args.collection_name, args.collection)
     limit = args.limit if args.limit and args.limit > 0 else None
     since_days = args.since_days if args.since_days and args.since_days > 0 else None
+    since_hours = args.since_hours if args.since_hours and args.since_hours > 0 else None
 
     # load tag schema for auto tags
     schema = load_tag_schema(args.tag_file)
@@ -622,7 +625,9 @@ def main() -> None:
     updated = 0
 
     cutoff = None
-    if since_days:
+    if since_hours:
+        cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=since_hours)
+    elif since_days:
         cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=since_days)
 
     # Choose iterator: recursive collection tree or flat

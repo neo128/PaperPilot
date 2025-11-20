@@ -22,6 +22,7 @@ def _script(repo_root: Path, filename: str) -> str:
 
 
 def _run_command(name: str, command: List[str], cwd: Path) -> StageRunResult:
+    """Execute the CLI for a given stage and raise immediately on failure so the pipeline stops."""
     process = subprocess.run(command, cwd=str(cwd), capture_output=True, text=True)
     if process.returncode != 0:
         raise RuntimeError(
@@ -30,10 +31,20 @@ def _run_command(name: str, command: List[str], cwd: Path) -> StageRunResult:
     return StageRunResult(name=name, command=command, stdout=process.stdout, stderr=process.stderr)
 
 
+def _announce(stage: str, detail: str) -> None:
+    print(f"[PIPELINE] → {stage}: {detail}")
+
+
+def _announce_done(stage: str) -> None:
+    print(f"[PIPELINE] ✓ {stage} completed")
+
+
 def watch_stage(state: PipelineState, config: PipelineConfig) -> PipelineState:
+    """Run the arXiv watcher, capturing log/report paths as artifacts."""
     stage_cfg = config.watch
     if not stage_cfg.enabled:
         return state
+    _announce("watch", f"since_hours={stage_cfg.since_hours} top_k={stage_cfg.top_k} min_score={stage_cfg.min_score}")
 
     logs_dir = config.logs_dir
     reports_dir = config.reports_dir
@@ -51,6 +62,8 @@ def watch_stage(state: PipelineState, config: PipelineConfig) -> PipelineState:
         str(stage_cfg.tag_file),
         "--since-days",
         str(stage_cfg.since_days),
+        "--since-hours",
+        str(stage_cfg.since_hours),
         "--top-k",
         str(stage_cfg.top_k),
         "--min-score",
@@ -76,13 +89,43 @@ def watch_stage(state: PipelineState, config: PipelineConfig) -> PipelineState:
             artifacts["report_data_error"] = "Failed to parse report JSON"
     result.artifacts = artifacts
     state.watch = result
+    _announce_done("watch")
+    return state
+
+
+def pdf_stage(state: PipelineState, config: PipelineConfig) -> PipelineState:
+    stage_cfg = config.pdf
+    if not stage_cfg.enabled:
+        return state
+    _announce("pdf", f"since_hours={stage_cfg.since_hours} limit={stage_cfg.limit or '∞'}")
+
+    cmd: List[str] = [
+        PYTHON,
+        _script(config.repo_root, "fetch_missing_pdfs.py"),
+        "--since-hours",
+        str(stage_cfg.since_hours),
+        "--new-items-json",
+        str(stage_cfg.new_items_json),
+    ]
+    if stage_cfg.limit:
+        cmd += ["--limit", str(stage_cfg.limit)]
+    if stage_cfg.storage_dir:
+        cmd += ["--storage-dir", str(stage_cfg.storage_dir)]
+    if stage_cfg.dry_run:
+        cmd.append("--dry-run")
+
+    result = _run_command("fetch-pdfs", cmd, config.repo_root)
+    state.pdf = result
+    _announce_done("pdf")
     return state
 
 
 def dedupe_stage(state: PipelineState, config: PipelineConfig) -> PipelineState:
+    """Invoke the duplicate-merging script with the currently configured filters."""
     stage_cfg = config.dedupe
     if not stage_cfg.enabled:
         return state
+    _announce("dedupe", f"limit={stage_cfg.limit or '∞'} since_hours={stage_cfg.modified_since_hours}")
 
     cmd: List[str] = [
         PYTHON,
@@ -100,16 +143,21 @@ def dedupe_stage(state: PipelineState, config: PipelineConfig) -> PipelineState:
         cmd += ["--limit", str(stage_cfg.limit)]
     if stage_cfg.dry_run:
         cmd.append("--dry-run")
+    if stage_cfg.modified_since_hours:
+        cmd += ["--modified-since-hours", str(stage_cfg.modified_since_hours)]
 
     result = _run_command("dedupe", cmd, config.repo_root)
     state.dedupe = result
+    _announce_done("dedupe")
     return state
 
 
 def summary_stage(state: PipelineState, config: PipelineConfig) -> PipelineState:
+    """Trigger Doubao summarization and note insertion."""
     stage_cfg = config.summary
     if not stage_cfg.enabled:
         return state
+    _announce("summary", f"limit={stage_cfg.limit or '∞'} since_hours={stage_cfg.modified_since_hours}")
 
     stage_cfg.summary_dir.mkdir(parents=True, exist_ok=True)
 
@@ -141,17 +189,22 @@ def summary_stage(state: PipelineState, config: PipelineConfig) -> PipelineState
         cmd.append("--force")
     if stage_cfg.model:
         cmd += ["--model", stage_cfg.model]
+    if stage_cfg.modified_since_hours:
+        cmd += ["--modified-since-hours", str(stage_cfg.modified_since_hours)]
 
     result = _run_command("summaries", cmd, config.repo_root)
     result.artifacts["summary_dir"] = stage_cfg.summary_dir
     state.summary = result
+    _announce_done("summary")
     return state
 
 
 def abstract_stage(state: PipelineState, config: PipelineConfig) -> PipelineState:
+    """Fill missing abstracts using CrossRef/Semantic Scholar sources."""
     stage_cfg = config.abstract
     if not stage_cfg.enabled:
         return state
+    _announce("abstracts", f"limit={stage_cfg.limit or '∞'} since_hours={stage_cfg.modified_since_hours}")
 
     cmd: List[str] = [
         PYTHON,
@@ -167,16 +220,21 @@ def abstract_stage(state: PipelineState, config: PipelineConfig) -> PipelineStat
         cmd += ["--limit", str(stage_cfg.limit)]
     if stage_cfg.dry_run:
         cmd.append("--dry-run")
+    if stage_cfg.modified_since_hours:
+        cmd += ["--modified-since-hours", str(stage_cfg.modified_since_hours)]
 
     result = _run_command("abstracts", cmd, config.repo_root)
     state.abstract = result
+    _announce_done("abstracts")
     return state
 
 
 def notion_stage(state: PipelineState, config: PipelineConfig) -> PipelineState:
+    """Push the enriched Zotero data into Notion."""
     stage_cfg = config.notion
     if not stage_cfg.enabled:
         return state
+    _announce("notion", f"limit={stage_cfg.limit} since_hours={stage_cfg.since_hours}")
 
     cmd: List[str] = [
         PYTHON,
@@ -200,7 +258,10 @@ def notion_stage(state: PipelineState, config: PipelineConfig) -> PipelineState:
         cmd.append("--skip-untitled")
     if stage_cfg.enrich_with_doubao:
         cmd.append("--enrich-with-doubao")
+    if stage_cfg.since_hours:
+        cmd += ["--since-hours", str(stage_cfg.since_hours)]
 
     result = _run_command("notion-sync", cmd, config.repo_root)
     state.notion = result
+    _announce_done("notion")
     return state

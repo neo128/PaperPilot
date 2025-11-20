@@ -9,7 +9,8 @@ from typing import Optional
 class WatchStageConfig:
     enabled: bool = True
     tag_file: Path = field(default_factory=lambda: Path("tag.json"))
-    since_days: int = 14
+    since_days: int = 0
+    since_hours: float = 24.0
     top_k: int = 10
     min_score: float = 0.3
     create_collections: bool = True
@@ -28,6 +29,7 @@ class DedupeStageConfig:
     limit: int = 0
     group_by: str = "auto"
     dry_run: bool = False
+    modified_since_hours: float = 24.0
 
 
 @dataclass
@@ -45,6 +47,7 @@ class SummaryStageConfig:
     insert_note: bool = True
     force: bool = False
     model: Optional[str] = None
+    modified_since_hours: float = 24.0
 
 
 @dataclass
@@ -55,6 +58,7 @@ class AbstractStageConfig:
     tag: Optional[str] = None
     limit: int = 0
     dry_run: bool = False
+    modified_since_hours: float = 24.0
 
 
 @dataclass
@@ -66,9 +70,20 @@ class NotionStageConfig:
     tag: Optional[str] = None
     limit: int = 500
     since_days: int = 0
+    since_hours: float = 24.0
     skip_untitled: bool = True
     enrich_with_doubao: bool = True
     tag_file: Path = field(default_factory=lambda: Path("tag.json"))
+
+
+@dataclass
+class PDFStageConfig:
+    enabled: bool = True
+    since_hours: float = 24.0
+    limit: int = 0
+    new_items_json: Path = field(default_factory=lambda: Path(".data/new_items_watch.json"))
+    storage_dir: Optional[Path] = None
+    dry_run: bool = False
 
 
 @dataclass
@@ -79,11 +94,13 @@ class PipelineConfig:
     summary: SummaryStageConfig = field(default_factory=SummaryStageConfig)
     abstract: AbstractStageConfig = field(default_factory=AbstractStageConfig)
     notion: NotionStageConfig = field(default_factory=NotionStageConfig)
+    pdf: PDFStageConfig = field(default_factory=PDFStageConfig)
 
     logs_dir: Path = field(default_factory=lambda: Path("logs"))
     reports_dir: Path = field(default_factory=lambda: Path("reports"))
 
     def resolve(self) -> "PipelineConfig":
+        """Normalize relative paths so downstream subprocess calls have absolute inputs."""
         base = self.repo_root
         self.logs_dir = (self.logs_dir if self.logs_dir.is_absolute() else base / self.logs_dir).resolve()
         self.reports_dir = (self.reports_dir if self.reports_dir.is_absolute() else base / self.reports_dir).resolve()
@@ -92,9 +109,13 @@ class PipelineConfig:
         self.watch.report_json = self._resolve_optional(self.watch.report_json)
         self.summary.summary_dir = self._resolve_path(self.summary.summary_dir)
         self.notion.tag_file = self._resolve_path(self.notion.tag_file)
+        self.pdf.new_items_json = self._resolve_path(self.pdf.new_items_json)
+        if self.pdf.storage_dir:
+            self.pdf.storage_dir = self._resolve_path(self.pdf.storage_dir)
         return self
 
     def _resolve_path(self, target: Path) -> Path:
+        # Keep helper explicit so nested dataclass fields reuse the same logic.
         return target if target.is_absolute() else (self.repo_root / target).resolve()
 
     def _resolve_optional(self, target: Optional[Path]) -> Optional[Path]:

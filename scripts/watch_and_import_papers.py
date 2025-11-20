@@ -163,6 +163,7 @@ def normalize_title(s: Optional[str]) -> str:
 
 @dataclass
 class Candidate:
+    """Lightweight container representing one fetched paper before it becomes a Zotero item."""
     title: str
     authors: List[str]
     date: Optional[str]
@@ -217,6 +218,8 @@ def candidate_ty_key(cand: Candidate) -> Optional[str]:
 
 
 def build_library_index(zot: ZoteroAPI) -> Dict[str, Any]:
+    # The index keeps both quick-membership sets and entry lookups so we can
+    # dedupe incoming candidates and optionally patch the existing entry.
     doi_set: Set[str] = set()
     arxiv_set: Set[str] = set()
     url_set: Set[str] = set()
@@ -268,6 +271,7 @@ def build_library_index(zot: ZoteroAPI) -> Dict[str, Any]:
 
 
 def find_existing_entry(idx: Dict[str, Any], cand: Candidate) -> Optional[Dict[str, Any]]:
+    # Check identifiers in order of reliability to find a concrete Zotero entry.
     if cand.doi and cand.doi in idx["by_doi"]:
         return idx["by_doi"].get(cand.doi)
     if cand.arxiv_id and cand.arxiv_id in idx["by_arxiv"]:
@@ -289,11 +293,14 @@ def enrich_existing_entry(
     collection_key: Optional[str],
     log_fn,
 ) -> bool:
+    # Fill in missing metadata on an existing Zotero entry using the richer
+    # candidate data we just fetched from external sources.
     data = entry.get("data", {})
     new_data = data.copy()
     changed_fields: List[str] = []
 
     def mark(field: str) -> None:
+        # Track which fields changed for logging/debugging.
         if field not in changed_fields:
             changed_fields.append(field)
 
@@ -348,6 +355,7 @@ def compute_score(now: dt.datetime, cand: Candidate, max_days: int, cit: Optiona
         except Exception:
             ref_date = None
     if not ref_date and cand.year:
+        # Fall back to publishing year so older records still get a recency weight.
         try:
             ref_date = dt.datetime(int(cand.year), 1, 1, tzinfo=dt.timezone.utc)
         except Exception:
@@ -370,7 +378,13 @@ def compute_score(now: dt.datetime, cand: Candidate, max_days: int, cit: Optiona
 def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="Watch and import recent papers to Zotero based on tag.json")
     ap.add_argument("--tags", default="tag.json", help="Path to tag schema JSON.")
-    ap.add_argument("--since-days", type=int, default=90, help="Time window in days for new papers.")
+    ap.add_argument("--since-days", type=int, default=0, help="Deprecated. Prefer --since-hours for finer control.")
+    ap.add_argument(
+        "--since-hours",
+        type=float,
+        default=24.0,
+        help="Time window in hours for fetching/processing new papers (default: 24).",
+    )
     ap.add_argument("--top-k", type=int, default=10, help="Max items per tag to consider after scoring.")
     ap.add_argument("--min-score", type=float, default=0.3, help="Minimum score threshold to import.")
     ap.add_argument("--create-collections", action="store_true", help="Auto create collections for tags if missing.")
@@ -415,6 +429,7 @@ def main() -> None:
         "started_at": dt.datetime.now().isoformat(),
         "params": {
             "since_days": args.since_days,
+            "since_hours": args.since_hours,
             "top_k": args.top_k,
             "min_score": args.min_score,
             "create_collections": args.create_collections,
@@ -429,7 +444,10 @@ def main() -> None:
         print(line)
         print(line, file=log_fh)
 
-    log(f"[INFO] Started watch. since_days={args.since_days} top_k={args.top_k} min_score={args.min_score}")
+    effective_days = args.since_days if args.since_days and args.since_days > 0 else max(args.since_hours / 24.0, 0.01)
+    log(
+        f"[INFO] Started watch. since_hours={args.since_hours} (→ days={effective_days:.2f}) top_k={args.top_k} min_score={args.min_score}"
+    )
 
     log("[INFO] Building library index for dedupe...")
     idx = build_library_index(zot)
@@ -437,6 +455,7 @@ def main() -> None:
 
     now = dt.datetime.now(dt.timezone.utc)
     created_identities: Set[str] = set()
+    new_items: List[Dict[str, Any]] = []
     unpaywall_email = os.environ.get("UNPAYWALL_EMAIL")
 
     for tag_key, cfg in tag_schema.items():
@@ -448,7 +467,7 @@ def main() -> None:
         log(f"[TAG] {tag_key} '{label}' keywords={len(keywords)}")
 
         # Fetch candidates from arXiv
-        cands_raw = fetch_arxiv_by_keywords(keywords, since_days=args.since_days, max_results=args.top_k * 5)
+        cands_raw = fetch_arxiv_by_keywords(keywords, since_days=effective_days, max_results=args.top_k * 5)
         candidates: List[Candidate] = []
         for it in cands_raw:
             candidates.append(
@@ -468,7 +487,8 @@ def main() -> None:
                 )
             )
 
-        # Enrich a limited slice with S2 / CrossRef to get citations / better abstracts
+        # Enrich a limited slice with S2 / CrossRef to get citations / better abstracts.
+        # This keeps the API cost bounded while still letting the scorer reason on richer metadata.
         enriched: List[Tuple[Candidate, Optional[int], Optional[int]]] = []
         for cand in candidates[: min(len(candidates), args.top_k * 5)]:
             cit = inf = None
@@ -572,6 +592,15 @@ def main() -> None:
                     report["tags"][tag_key]["added"] += 1
                     report["summary"]["added"] += 1
                     log(f"[ADD] {cand.title[:80]} → {label} [{parent_key}]")
+                    new_items.append(
+                        {
+                            "key": parent_key,
+                            "title": cand.title,
+                            "tag": label,
+                            "collection_key": collection_key,
+                            "created_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+                        }
+                    )
                     # attach PDF url
                     pdf_url = cand.pdf_url or (fetch_unpaywall_pdf(cand.doi, unpaywall_email) if cand.doi else None)
                     if pdf_url:
@@ -583,6 +612,18 @@ def main() -> None:
             except requests.HTTPError as exc:
                 log(f"[ERR] Create item failed: {exc}")
                 report["errors"].append({"title": cand.title, "error": str(exc)})
+
+    new_items_path = state_dir / "new_items_watch.json"
+    new_payload = {
+        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+        "since_hours": args.since_hours,
+        "items": new_items,
+    }
+    try:
+        new_items_path.write_text(json.dumps(new_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        log(f"[INFO] Recorded {len(new_items)} new items → {new_items_path}")
+    except Exception as exc:
+        log(f"[WARN] Failed to write new items file: {exc}")
 
     report["finished_at"] = dt.datetime.now().isoformat()
     log(f"[INFO] Done. Summary: {json.dumps(report['summary'])}")

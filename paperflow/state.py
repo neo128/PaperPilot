@@ -17,6 +17,7 @@ class StageRunResult:
 @dataclass
 class PipelineState:
     watch: Optional[StageRunResult] = None
+    pdf: Optional[StageRunResult] = None
     dedupe: Optional[StageRunResult] = None
     summary: Optional[StageRunResult] = None
     abstract: Optional[StageRunResult] = None
@@ -26,6 +27,7 @@ class PipelineState:
         def dump(stage: Optional[StageRunResult]) -> Optional[Dict[str, Any]]:
             if not stage:
                 return None
+            # Artifacts may include Paths, so convert to str for JSON serialization.
             return {
                 "name": stage.name,
                 "command": stage.command,
@@ -36,6 +38,7 @@ class PipelineState:
 
         return {
             "watch": dump(self.watch),
+            "pdf": dump(self.pdf),
             "dedupe": dump(self.dedupe),
             "summary": dump(self.summary),
             "abstract": dump(self.abstract),

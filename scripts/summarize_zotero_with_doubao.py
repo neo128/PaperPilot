@@ -454,6 +454,17 @@ def ensure_env(name: str) -> str:
     return value
 
 
+def parse_iso(value: Optional[str]) -> Optional[dt.datetime]:
+    if not value:
+        return None
+    try:
+        if value.endswith("Z"):
+            value = value[:-1] + "+00:00"
+        return dt.datetime.fromisoformat(value)
+    except Exception:
+        return None
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Summarize Zotero PDFs via Doubao and attach notes or save locally.")
     parser.add_argument("--tag", help="Only process items tagged with this string.")
@@ -472,6 +483,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", help="Override Doubao bot model id (defaults to env ARK_BOT_MODEL or built-in).")
     parser.add_argument("--force", action="store_true", help="Ignore existing AI总结/豆包总结笔记并重新生成。")
     parser.add_argument("--recursive", action="store_true", help="Include items in sub-collections when a collection is selected.")
+    parser.add_argument(
+        "--modified-since-hours",
+        type=float,
+        default=24.0,
+        help="Only summarize items modified within the last N hours (default 24).",
+    )
     return parser.parse_args()
 
 
@@ -506,6 +523,7 @@ def main() -> None:
             for pdf in folder.glob("*.pdf"):
                 local_pdfs.append((pdf.stem, pdf))
 
+    # We only talk to Zotero if we need to resolve items remotely or write notes back.
     require_remote_lookup = bool(args.collection or args.collection_name or args.item_keys or not local_pdfs)
     need_zotero = args.insert_note or require_remote_lookup
     zotero_client: Optional[ZoteroAPI] = None
@@ -534,6 +552,7 @@ def main() -> None:
         resolved_collection_keys: List[str] = []
         if resolved_collection_key:
             if args.recursive:
+                # Depth-first traversal to include every descendant collection.
                 stack = [resolved_collection_key]
                 seen = set()
                 while stack:
@@ -555,6 +574,7 @@ def main() -> None:
             resolved_collection_keys = []
 
     if local_pdfs:
+        # When processing PDFs directly, optionally persist Markdown to disk for later editing.
         summary_dir = Path(args.summary_dir).expanduser() if args.summary_dir else None
         if summary_dir:
             summary_dir.mkdir(parents=True, exist_ok=True)
@@ -627,8 +647,24 @@ def main() -> None:
         print(f"[INFO] No Zotero items matched {scope_desc}; nothing to process.")
         return
 
+    cutoff = None
+    if args.modified_since_hours and args.modified_since_hours > 0:
+        cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=args.modified_since_hours)
+    if cutoff:
+        filtered: List[Dict[str, Any]] = []
+        for parent in parent_items:
+            dm = parse_iso(parent.get("dateModified"))
+            if dm and dm < cutoff:
+                continue
+            filtered.append(parent)
+        parent_items = filtered
+    if not parent_items:
+        print(f"[INFO] No Zotero items newer than the last {args.modified_since_hours} hours; nothing to do.")
+        return
+
     processed_items = 0
     notes_created = 0
+    
 
     for parent in parent_items:
         title = parent.get("title") or parent.get("shortTitle") or parent.get("key")

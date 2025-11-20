@@ -69,6 +69,7 @@ def normalize_url(url: str) -> str:
 
 
 def canonical_group_key(data: Dict[str, Any], mode: str) -> Optional[Tuple[str, str]]:
+    """Return the identifier (DOI / normalized URL / normalized title|year) used to cluster parents."""
     def clean_doi(raw: Optional[str]) -> Optional[str]:
         if not raw:
             return None
@@ -114,6 +115,7 @@ def canonical_group_key(data: Dict[str, Any], mode: str) -> Optional[Tuple[str, 
 
 
 def child_signature(child: Dict[str, Any]) -> Tuple[str, str, str]:
+    """Build a light-weight fingerprint for attachments/notes so we don't duplicate children."""
     data = child["data"]
     item_type = data.get("itemType") or ""
     if item_type == "note":
@@ -127,6 +129,7 @@ def child_signature(child: Dict[str, Any]) -> Tuple[str, str, str]:
 
 
 def has_pdf_attachment(children: Sequence[Dict[str, Any]]) -> bool:
+    """Check if any attachment looks like a PDF so we can prefer that bundle as the survivor."""
     for child in children:
         data = child["data"]
         if data.get("itemType") != "attachment":
@@ -148,6 +151,7 @@ class ItemBundle:
     added: dt.datetime
 
     def score(self) -> Tuple[int, int, int, dt.datetime, dt.datetime]:
+        """Winner heuristic: PDFs first, then attachment/note counts, finally recency."""
         attachment_count = len(self.attachments)
         note_count = len(self.notes)
         pdf_score = 1 if self.has_pdf else 0
@@ -270,6 +274,12 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--tag", help="Only consider top-level items containing this tag.")
     ap.add_argument("--limit", type=int, default=0, help="Max number of top-level items to scan (<=0 means no limit).")
     ap.add_argument(
+        "--modified-since-hours",
+        type=float,
+        default=24.0,
+        help="Only consider parents modified within the last N hours (default: 24).",
+    )
+    ap.add_argument(
         "--group-by",
         choices=["auto", "doi", "url", "title"],
         default="auto",
@@ -300,6 +310,7 @@ def merge_group(
     bundles: List[ItemBundle],
     dry_run: bool,
 ) -> Tuple[int, int]:
+    """Move unique children from losers to winner, merge metadata, then delete duplicates."""
     bundles_sorted = sorted(bundles, key=lambda b: b.score(), reverse=True)
     winner = bundles_sorted[0]
     loser_bundles = bundles_sorted[1:]
@@ -317,6 +328,7 @@ def merge_group(
     existing_tags = {tag.get("tag"): tag for tag in winner.entry["data"].get("tags") or [] if tag.get("tag")}
 
     for loser in loser_bundles:
+        # Keep the full union of collections/tags across all duplicates.
         union_collections.update(loser.entry["data"].get("collections") or [])
         for tag in loser.entry["data"].get("tags") or []:
             tag_value = tag.get("tag")
@@ -367,7 +379,18 @@ def main() -> None:
     limit = args.limit if args.limit > 0 else None
 
     top_items = list(api.iter_top_items(collection_key, args.tag, limit))
-    print(f"[INFO] Scanned {len(top_items)} top-level items.")
+    cut_off = None
+    if args.modified_since_hours and args.modified_since_hours > 0:
+        cut_off = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=args.modified_since_hours)
+    if cut_off:
+        filtered: List[Dict[str, Any]] = []
+        for entry in top_items:
+            dm = parse_iso8601(entry["data"].get("dateModified"))
+            if dm and dm < cut_off:
+                continue
+            filtered.append(entry)
+        top_items = filtered
+    print(f"[INFO] Scanned {len(top_items)} top-level items (after time filter).")
 
     groups: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
     for entry in top_items:
