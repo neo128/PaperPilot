@@ -9,22 +9,12 @@ PaperPilot is a suite of AI-powered helper scripts that integrate with Zotero fo
 python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # 2) Install deps (markdown is optional but improves local HTML rendering)
-pip install requests pypdf openai markdown
+pip install requests pypdf openai markdown google-api-python-client
 
-# 3) Environment (put into exp and source it)
-export ZOTERO_USER_ID=your_user_id            # required
-export ZOTERO_API_KEY=your_api_key            # required (write access)
-export ARK_API_KEY=your_doubao_api_key        # required (ByteDance Ark / Doubao)
-export ZOTERO_STORAGE_DIR=~/Zotero/storage    # optional (default as shown)
-export ARK_BOT_MODEL=bot-xxxxxxxxxxxxxxx      # optional (fallback is provided)
-# Optional (for some scripts)
-export NOTION_API_KEY=...                     # Notion sync
-export NOTION_DATABASE_ID=...                 # Notion database id
-export UNPAYWALL_EMAIL=you@example.com        # For open-access PDF links
-
-# 4) Load env each time (first copy exp.example to exp and edit values)
-cp -n exp.example exp 2>/dev/null || true
-source ./exp
+# 3) Environment: copy `.env.example` to `.env` and fill values
+cp -n .env.example .env 2>/dev/null || true
+# Python scripts auto-load `.env` (no need to source). If you need the vars in shell tools:
+# set -a; source .env; set +a
 ```
 
 Quick checks (optional):
@@ -77,7 +67,7 @@ PY
 - Preview: `python scripts/sync_zotero_to_notion.py --since-days 30 --limit 200 --tag-file ./tag.json --skip-untitled --dry-run`
 - Collection + descendants + Doubao: `python scripts/sync_zotero_to_notion.py --collection-name "Embodied AI" --recursive --limit 500 --tag-file ./tag.json --skip-untitled --enrich-with-doubao`
 
-Tip: All commands depend on `source ./exp`; start with small `--limit` or `--dry-run`.
+Tip: Commands rely on variables in `.env` (Python auto-loads it). Start with small `--limit` or `--dry-run`.
 
 ## Cheat Sheet
 
@@ -144,6 +134,32 @@ Key flags:
 - Flags: `--since-hours`, `--limit`, `--new-items-json`, `--storage-dir`, `--dry-run`.
 - Requires `ZOTERO_USER_ID`, `ZOTERO_API_KEY`; `UNPAYWALL_EMAIL` improves hit rate.
 
+### export_zotero_pdfs_to_gdrive.py
+- Mirrors the Zotero collection tree into Google Drive folders and uploads each item's PDF attachment(s). Perfect for mirroring curated topics into a shared Drive with the same hierarchy.
+- Prereqs: create a Google Cloud service account, generate a JSON key, share the target Drive folder with the service account email (Editor access), and note the folder ID (`https://drive.google.com/drive/folders/<ID>`). Install `google-api-python-client` (already listed in `requirements.txt`).
+- Environment: `ZOTERO_USER_ID`, `ZOTERO_API_KEY`, plus either `--credentials-file` or `GOOGLE_SERVICE_ACCOUNT_FILE` / `GOOGLE_APPLICATION_CREDENTIALS`. `--drive-root-folder` (or `GOOGLE_DRIVE_ROOT_FOLDER`) is required unless running `--dry-run`.
+- Dry run example (preview folders/files):
+  ```bash
+  # With .env filled in, Python auto-loads it
+  python scripts/export_zotero_pdfs_to_gdrive.py \
+    --collection-name "Embodied AI" \
+    --drive-root-folder 1AbCdEfGhIjKlmnOp \
+    --dry-run
+  ```
+- Actual upload with overwrite:
+  ```bash
+  python scripts/export_zotero_pdfs_to_gdrive.py \
+    --drive-root-folder 1AbCdEfGhIjKlmnOp \
+    --credentials-file ./service-account.json \
+    --limit 0 \
+    --overwrite
+  ```
+- Behavior notes:
+  - Defaults to all top-level collections; use `--collection` or `--collection-name` to export a subtree, and `--no-recursive` to stay on the current level only.
+  - Reads local attachments from `ZOTERO_STORAGE_DIR` (imported_file / linked_file / imported_url). If only a `linked_url` exists, the script downloads it to a temp folder before uploading.
+  - Skips files that already exist in the Drive folder unless `--overwrite` is set.
+  - `--limit` caps the number of parent items per collection (0 = unlimited). `--dry-run` shows the intended plan without touching Drive.
+
 ### sync_zotero_to_notion.py
 - Syncs Zotero items to a Notion database with strict column-name mapping and optional Doubao extraction. Key flags:
   - `--collection-name/--collection` (with `--recursive`), `--tag`, `--since-days`, `--limit`, `--tag-file`, `--skip-untitled`, `--dry-run`, `--debug`.
@@ -159,7 +175,7 @@ Key flags:
 - Imports all `.ris` files in a folder (and subfolders) to Zotero. Default: each RIS file → its own collection; can merge into one collection via flags; `--dedupe-by-url` avoids duplicates.
 
 ## Troubleshooting
-- Missing env var: `source ./exp` and check `ZOTERO_*`, `ARK_API_KEY`, optionally Notion/Unpaywall.
+- Missing env var: fill `.env` (e.g., `ZOTERO_*`, `ARK_API_KEY`, Notion/Unpaywall/Drive). Python auto-loads `.env`; to expose vars in shell, run `set -a; source .env; set +a`.
 - Network errors: use local PDFs or local README; retry when network recovers.
 - No matching items: relax filters; verify collection names/tags.
 - No local PDF: ensure the PDF is a stored or linked attachment.
@@ -171,13 +187,14 @@ Key flags:
 - `scripts/import_embodied_ai_to_zotero.py` — import list to RIS/Zotero via API
 - `scripts/summarize_zotero_with_doubao.py` — batch summaries → Notes (Markdown)
 - `scripts/fetch_missing_pdfs.py` — auto-download/link PDFs for recent items
+- `scripts/export_zotero_pdfs_to_gdrive.py` — mirror collections to Google Drive and upload PDFs
 - `scripts/merge_zotero_duplicates.py` — merge duplicates safely
 - `scripts/list_zotero_collections.py` — print collection tree (markdown/text)
 - `scripts/enrich_zotero_abstracts.py` — fill missing abstracts
 - `scripts/watch_and_import_papers.py` — watch/import with scoring/logging
 - `scripts/sync_zotero_to_notion.py` — Zotero → Notion sync (strict mapping; Doubao extraction)
 - `scripts/ai_toolbox_pipeline.sh` — one-click pipeline
-- `exp` — env template (always `source ./exp` before running)
+- `.env.example` — env template (copy to `.env`, Python auto-loads)
 
 ## Safety
 - Destructive actions (e.g., deleting notes) should be run with `--dry-run` first.

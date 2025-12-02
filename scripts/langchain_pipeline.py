@@ -2,6 +2,11 @@
 """LangChain-driven orchestration for the Zotero automation flow."""
 from __future__ import annotations
 
+try:  # auto-load .env via sitecustomize if present
+    import sitecustomize  # noqa: F401
+except Exception:
+    pass
+
 import argparse
 import json
 import sys

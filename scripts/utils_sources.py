@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+try:  # auto-load .env via sitecustomize if present
+    import sitecustomize  # noqa: F401
+except Exception:
+    pass
+
 import datetime as dt
 import html
 import json
@@ -277,10 +282,14 @@ def fetch_hf_period(period: str, identifier: str, label: str, limit: int) -> Lis
         arxiv_id = paper.get("id") or paper.get("arxivId") or item.get("arxiv_id")
         doi = paper.get("doi") or item.get("doi")
         pdf_url = paper.get("pdfUrl") or item.get("pdf_url")
-        if not url and arxiv_id:
-            url = f"{HF_PAPERS_BASE.rstrip('/')}/paper/{arxiv_id}"
-        if not pdf_url and arxiv_id:
-            pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+        if arxiv_id:
+            abs_url = f"https://arxiv.org/abs/{arxiv_id}"
+            if not url or "huggingface.co" in (url or "").lower():
+                url = abs_url
+            if not pdf_url:
+                pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+        elif not url:
+            url = paper.get("paperUrl") or item.get("paperUrl")
         published = paper.get("publishedAt") or item.get("publishedAt")
         year = published[:4] if published else None
         date_str = published[:10] if published else None

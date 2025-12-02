@@ -1,28 +1,30 @@
 #!/usr/bin/env python3
 """
-Zotero PDF → AI summary (Doubao/Qwen/OpenAI-compatible) → Zotero note
---------------------------------------------------------------------
+Zotero PDF → Doubao summary → Zotero note
+----------------------------------------
 
 This script walks through Zotero items, finds local PDF attachments, extracts a
-text snippet, sends it to an OpenAI-compatible chat API (Doubao by default, but
-Qwen/DashScope or any custom endpoint are supported), and stores the returned
-summary back into Zotero as a child note.
+text snippet, sends it to the Doubao (ByteDance Ark) Chat Completions API, and
+stores the returned summary back into Zotero as a child note.
 
 Prerequisites:
   * `pip install requests pypdf openai`
   * Environment variables:
         ZOTERO_USER_ID       # required, numeric Zotero user id
         ZOTERO_API_KEY       # required, API key with write access
-        ARK_API_KEY          # required when provider=doubao
+        ARK_API_KEY          # required, Doubao API key
         ZOTERO_STORAGE_DIR   # optional, defaults to ~/Zotero/storage
         ARK_BOT_MODEL        # optional, defaults to bot-20251111104927-mf7bx
-        DASHSCOPE_API_KEY    # required when provider=qwen/dashscope
-        DASHSCOPE_MODEL      # optional, defaults to qwen3-max
 
 Example:
   python summarize_zotero_with_doubao.py --tag Awesome-VLA --limit 5 --max-pages 8
 """
 from __future__ import annotations
+
+try:  # auto-load .env via sitecustomize if present
+    import sitecustomize  # noqa: F401
+except Exception:
+    pass
 
 import argparse
 import datetime as dt
@@ -310,7 +312,7 @@ class AIChatClient:
             """).strip()
 
         return dedent(f"""
-        你是资深的 AI / AGI / 具身智能 / 机器人领域论文审稿专家。
+        你是资深的 AI / AGI / 具身智能 / 机器人领域资深技术专家。
         {domain_note}
         仅可基于《正文片段》生成内容，不得主观推断。
         请用 **Markdown 中文** 输出，整体不超过 {out_limit} 字。
@@ -470,14 +472,14 @@ def parse_iso(value: Optional[str]) -> Optional[dt.datetime]:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Summarize Zotero PDFs via an OpenAI-compatible chat API and attach notes or save locally.")
+    parser = argparse.ArgumentParser(description="Summarize Zotero PDFs via Doubao and attach notes or save locally.")
     parser.add_argument("--tag", help="Only process items tagged with this string.")
     parser.add_argument("--collection", help="Only process items inside the specified collection key.")
     parser.add_argument("--collection-name", help="Lookup a Zotero collection by name and process its items.")
     parser.add_argument("--item-keys", help="Comma-separated list of specific Zotero item keys to process.")
-    parser.add_argument("--limit", type=int, default=0, help="Maximum number of parent items to process (<=0 means no cap).")
+    parser.add_argument("--limit", type=int, default=10, help="Maximum number of parent items to process (<=0 means no cap).")
     parser.add_argument("--max-pages", type=int, default=12, help="Max PDF pages to read per attachment (default: 12).")
-    parser.add_argument("--max-chars", type=int, default=12000, help="Max characters to send to the AI model (after extraction).")
+    parser.add_argument("--max-chars", type=int, default=12000, help="Max characters to send to Doubao (after extraction).")
     parser.add_argument("--note-tag", default="AI总结", help="Tag to add to the generated note.")
     parser.add_argument("--storage-dir", help="Override Zotero storage directory (defaults to ~/Zotero/storage).")
     parser.add_argument("--pdf-path", action="append", help="Process a standalone PDF path (repeat flag to add more).")
@@ -512,7 +514,7 @@ def main() -> None:
     if not storage_dir.exists():
         raise SystemExit(f"Zotero storage directory not found: {storage_dir}")
 
-    ai_client = AIChatClient(ai_config)
+    doubao = AIChatClient(ai_config)
 
     local_pdfs: List[Tuple[str, Path]] = []
     if args.pdf_path:
@@ -600,7 +602,7 @@ def main() -> None:
             if not text:
                 print("    [WARN] Failed to extract text; skipping.")
                 continue
-            summary = ai_client.summarize(title_hint, text, locale="zh", max_chars=args.max_chars)
+            summary = doubao.summarize(title_hint, text, locale="zh", max_chars=args.max_chars)
             if summary_dir:
                 out_file = summary_dir / f"{pdf_path.stem}.summary.txt"
                 out_file.write_text(summary, encoding="utf-8")
@@ -719,7 +721,7 @@ def main() -> None:
             if not text:
                 print("    [WARN] Empty text extracted; skipping.")
                 continue
-            summary = ai_client.summarize(title, text, locale="zh", max_chars=args.max_chars)
+            summary = doubao.summarize(title, text, locale="zh", max_chars=args.max_chars)
             note_html = make_note_html(summary)
             zotero_client.create_note(note_parent_key, note_html, tags=[args.note_tag])
             print("    [OK] Note created.")

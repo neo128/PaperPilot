@@ -11,6 +11,11 @@ and deletes redundant parents. Use --dry-run to preview actions.
 """
 from __future__ import annotations
 
+try:  # auto-load .env via sitecustomize if present
+    import sitecustomize  # noqa: F401
+except Exception:
+    pass
+
 import argparse
 import datetime as dt
 import os

@@ -82,3 +82,86 @@
 [SKIP] duplicate Strategic Innovation Management in the Age of Large Language Models Market Intel (arxiv:2511.14709v1)
 [SKIP] duplicate Near-Lossless Model Compression Enables Longer Context Inference in DNA Large La (arxiv:2511.14694v1)
 [SKIP] duplicate Attention via Synaptic Plasticity is All You Need: A Biologically Inspired Spiki (arxiv:2511.14691v1)
+[SKIP] duplicate Ground Truth Generation for Multilingual Historical NLP using LLMs (doi:10.63744/uwodsxrk90vn)
+[SKIP] duplicate Encoding and Understanding Astrophysical Information in Large Language Model-Gen (arxiv:2511.14685v1)
+[SKIP] duplicate SMRC: Aligning Large Language Models with Student Reasoning for Mathematical Err (arxiv:2511.14684v1)
+[TAG] foundation_model 'foundation_model｜基础模型' keywords=4
+[SCORE] tag=foundation_model total=0 selected=0
+[TAG] dexterous_hand 'dexterous_hand｜灵巧机械手' keywords=4
+[SCORE] tag=dexterous_hand total=0 selected=0
+[TAG] humanoid_robot 'humanoid_robot｜类人机器人' keywords=4
+[SCORE] tag=humanoid_robot total=8 selected=5
+[COL] ensured collection 'humanoid_robot｜类人机器人' → B652AA82
+[SKIP] duplicate Exploring the Effectiveness of Google Play Store's Privacy Transparency Channels (arxiv:2511.13576v1)
+[SKIP] duplicate The Quick Red Fox gets the best Data Driven Classroom Interviews: A manual for a (arxiv:2511.13466v1)
+[SKIP] duplicate Hardware optimization on Android for inference of AI models (arxiv:2511.13453v1)
+[SKIP] duplicate CITADEL: A Semi-Supervised Active Learning Framework for Malware Detection Under (arxiv:2511.11979v1)
+[SKIP] duplicate UFO$^3$: Weaving the Digital Agent Galaxy (arxiv:2511.11332v1)
+[TAG] quadruped_robot 'quadruped_robot｜四足机器人' keywords=3
+[SCORE] tag=quadruped_robot total=0 selected=0
+[TAG] robotic_arm 'robotic_arm｜机械臂' keywords=3
+[SCORE] tag=robotic_arm total=0 selected=0
+[TAG] reinforcement_learning 'reinforcement_learning｜强化学习' keywords=4
+[SCORE] tag=reinforcement_learning total=50 selected=10
+[COL] ensured collection 'reinforcement_learning｜强化学习' → 8S3SWIMS
+[SKIP] duplicate UniGen-1.5: Enhancing Image Generation and Editing through Reward Unification in (arxiv:2511.14760v1)
+[SKIP] duplicate $π^{*}_{0.6}$: a VLA That Learns From Experience (arxiv:2511.14759v1)
+[SKIP] duplicate Heterogeneous Multi-Agent Proximal Policy Optimization for Power Distribution Sy (arxiv:2511.14730v1)
+[SKIP] duplicate Seer: Online Context Learning for Fast Synchronous LLM Reinforcement Learning (arxiv:2511.14617v1)
+[SKIP] duplicate Composition-Dependent Properties of $\mathrm{Ce_{x}La_{0.95-x}Tb_{0.05}F_{3}}$ N (doi:10.1016/j.radmeas.2025.107536)
+[SKIP] duplicate Agent-R1: Training Powerful LLM Agents with End-to-End Reinforcement Learning (arxiv:2511.14460v1)
+[SKIP] duplicate Agentic Video Intelligence: A Flexible Framework for Advanced Video Exploration  (arxiv:2511.14446v1)
+[SKIP] duplicate LLM-Aligned Geographic Item Tokenization for Local-Life Recommendation (arxiv:2511.14221v1)
+[SKIP] duplicate Parallelizing Tree Search with Twice Sequential Monte Carlo (arxiv:2511.14220v1)
+[SKIP] duplicate A Receding Horizon Reinforcement Learning Framework for Campus Chiller Energy Ma (arxiv:2511.14160v1)
+[TAG] imitation_learning 'imitation_learning｜模仿学习' keywords=5
+[SCORE] tag=imitation_learning total=0 selected=0
+[TAG] world_model 'world_model｜世界模型' keywords=4
+[SCORE] tag=world_model total=0 selected=0
+[TAG] simulator 'simulator｜仿真平台' keywords=5
+[SCORE] tag=simulator total=62 selected=10
+[COL] ensured collection 'simulator｜仿真平台' → KNGFHIMG
+[SKIP] duplicate A Sequential Operator-Splitting Framework for Exploration of Nonconvex Trajector (arxiv:2511.14752v1)
+[SKIP] duplicate Forecasting properties of detectable massive binary black hole mergers in the er (arxiv:2511.14739v1)
+[SKIP] duplicate Starlight-driven flared-staircase geometry in radiation hydrodynamic models of p (arxiv:2511.14733v1)
+[SKIP] duplicate Constraining the Nature of Dark Matter from Tidal Radii of Cluster Galaxy Subhal (arxiv:2511.14726v1)
+[SKIP] duplicate Zero-shot Synthetic Video Realism Enhancement via Structure-aware Denoising (arxiv:2511.14719v1)
+[SKIP] duplicate Bayesian Optimal Phase II design with optimised stopping boundaries and response (arxiv:2511.14714v1)
+[SKIP] duplicate Modelling the Milky Way's exoplanet population based on cosmological galaxy simu (arxiv:2511.14704v1)
+[SKIP] duplicate Nonparametric Uniform Inference in Binary Classification and Policy Values (arxiv:2511.14700v1)
+[SKIP] duplicate Transferring Data from a Voronoi Mesh to an Adaptive Cartesian Grid in Pursuit o (doi:10.3847/1538-4357/ae0e10)
+[SKIP] duplicate Scalable and Efficient Multiple Imputation for Case-Cohort Studies via Influence (arxiv:2511.14692v1)
+[TAG] motion_planning 'motion_planning｜运动规划' keywords=4
+[SCORE] tag=motion_planning total=0 selected=0
+[TAG] task_planning 'task_planning｜任务规划' keywords=4
+[SCORE] tag=task_planning total=50 selected=10
+[COL] ensured collection 'task_planning｜任务规划' → IDXJKRDJ
+[SKIP] duplicate A Neuro-Symbolic Framework for Reasoning under Perceptual Uncertainty: Bridging  (arxiv:2511.14533v1)
+[SKIP] duplicate Tell Me: An LLM-powered Mental Well-being Assistant with RAG, Synthetic Dialogue (arxiv:2511.14445v1)
+[SKIP] duplicate MA-SLAM: Active SLAM in Large-Scale Unknown Environment using Map Aware Deep Rei (arxiv:2511.14330v1)
+[SKIP] duplicate Enhancing Regional Airbnb Trend Forecasting Using LLM-Based Embeddings of Access (arxiv:2511.14248v1)
+[SKIP] duplicate FAPE-IR: Frequency-Aware Planning and Execution Framework for All-in-One Image R (arxiv:2511.14099v1)
+[SKIP] duplicate AISAC: An Integrated multi-agent System for Transparent, Retrieval-Grounded Scie (arxiv:2511.14043v1)
+[SKIP] duplicate On the Impact of Voltage Unbalance on Distribution Locational Marginal Prices (arxiv:2511.13971v1)
+[SKIP] duplicate GAEA: Experiences and Lessons Learned from a Country-Scale Environmental Digital (arxiv:2511.13807v1)
+[SKIP] duplicate DAP: A Discrete-token Autoregressive Planner for Autonomous Driving (arxiv:2511.13306v1)
+[SKIP] duplicate CorrectAD: A Self-Correcting Agentic System to Improve End-to-end Planning in Au (arxiv:2511.13297v1)
+[TAG] code_based_task_planning 'code_based_task_planning｜代码任务规划' keywords=4
+[SCORE] tag=code_based_task_planning total=0 selected=0
+[TAG] language_based_task_planning 'language_based_task_planning｜语言任务规划' keywords=3
+[SCORE] tag=language_based_task_planning total=0 selected=0
+[TAG] end_to_end_task_planning 'end_to_end_task_planning｜端到端任务规划' keywords=3
+[SCORE] tag=end_to_end_task_planning total=0 selected=0
+[TAG] grounded_task_planning 'grounded_task_planning｜具身语义任务规划' keywords=3
+[SCORE] tag=grounded_task_planning total=0 selected=0
+[TAG] transformer_policy 'transformer_policy｜Transformer控制策略' keywords=4
+[SCORE] tag=transformer_policy total=2 selected=0
+[TAG] diffusion_policy 'diffusion_policy｜扩散策略学习' keywords=3
+[SCORE] tag=diffusion_policy total=0 selected=0
+[TAG] 3d_vision '3d_vision｜3D视觉感知' keywords=4
+[SCORE] tag=3d_vision total=0 selected=0
+[TAG] point_based_action 'point_based_action｜基于点的控制' keywords=4
+[SCORE] tag=point_based_action total=0 selected=0
+[TAG] chain_of_thought 'chain_of_thought｜链式推理' keywords=4
+[SCORE] tag=chain_of_thought total=0 selected=0
+[INFO] Done. Summary: {"candidates": 0, "added": 0, "skipped": 94, "updated": 0}

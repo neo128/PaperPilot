@@ -1,8 +1,8 @@
 {
-  "started_at": "2025-11-19T20:34:44.196846",
+  "started_at": "2025-11-19T20:57:37.050681",
   "params": {
-    "since_days": 10,
-    "top_k": 20,
+    "since_days": 14,
+    "top_k": 10,
     "min_score": 0.3,
     "create_collections": true,
     "fill_missing": false,
@@ -13,183 +13,212 @@
       "label": "embodied_ai｜具身智能",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "sim2real": {
       "label": "sim2real｜模拟到现实",
       "candidates": 4,
       "added": 0,
-      "skipped": 2
+      "skipped": 4,
+      "updated": 0
     },
     "teleoperation": {
       "label": "teleoperation｜遥操作",
-      "candidates": 14,
+      "candidates": 15,
       "added": 0,
-      "skipped": 5
+      "skipped": 5,
+      "updated": 0
     },
     "robotic_navigation": {
       "label": "robotic_navigation｜机器人导航",
-      "candidates": 100,
+      "candidates": 50,
       "added": 0,
-      "skipped": 20
+      "skipped": 10,
+      "updated": 0
     },
     "robotic_manipulation": {
       "label": "robotic_manipulation｜机器人操作",
-      "candidates": 100,
+      "candidates": 50,
       "added": 0,
-      "skipped": 20
+      "skipped": 10,
+      "updated": 0
     },
     "robotic_grasping": {
       "label": "robotic_grasping｜机器人抓取",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "vision_language_model": {
       "label": "vision_language_model｜视觉语言模型",
-      "candidates": 162,
+      "candidates": 82,
       "added": 0,
-      "skipped": 20
+      "skipped": 10,
+      "updated": 0
     },
     "vision_language_action_model": {
       "label": "vision_language_action_model｜视觉语言动作模型",
-      "candidates": 35,
-      "added": 7,
-      "skipped": 10
+      "candidates": 55,
+      "added": 0,
+      "skipped": 10,
+      "updated": 0
     },
     "large_language_model": {
       "label": "large_language_model｜大语言模型",
-      "candidates": 100,
+      "candidates": 50,
       "added": 0,
-      "skipped": 20
+      "skipped": 10,
+      "updated": 0
     },
     "foundation_model": {
       "label": "foundation_model｜基础模型",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "dexterous_hand": {
       "label": "dexterous_hand｜灵巧机械手",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "humanoid_robot": {
       "label": "humanoid_robot｜类人机器人",
-      "candidates": 5,
+      "candidates": 8,
       "added": 0,
-      "skipped": 4
+      "skipped": 5,
+      "updated": 0
     },
     "quadruped_robot": {
       "label": "quadruped_robot｜四足机器人",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "robotic_arm": {
       "label": "robotic_arm｜机械臂",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "reinforcement_learning": {
       "label": "reinforcement_learning｜强化学习",
-      "candidates": 100,
+      "candidates": 50,
       "added": 0,
-      "skipped": 20
+      "skipped": 10,
+      "updated": 0
     },
     "imitation_learning": {
       "label": "imitation_learning｜模仿学习",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "world_model": {
       "label": "world_model｜世界模型",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "simulator": {
       "label": "simulator｜仿真平台",
-      "candidates": 112,
+      "candidates": 62,
       "added": 0,
-      "skipped": 20
+      "skipped": 10,
+      "updated": 0
     },
     "motion_planning": {
       "label": "motion_planning｜运动规划",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "task_planning": {
       "label": "task_planning｜任务规划",
-      "candidates": 53,
+      "candidates": 50,
       "added": 0,
-      "skipped": 20
+      "skipped": 10,
+      "updated": 0
     },
     "code_based_task_planning": {
       "label": "code_based_task_planning｜代码任务规划",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "language_based_task_planning": {
       "label": "language_based_task_planning｜语言任务规划",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "end_to_end_task_planning": {
       "label": "end_to_end_task_planning｜端到端任务规划",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "grounded_task_planning": {
       "label": "grounded_task_planning｜具身语义任务规划",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "transformer_policy": {
       "label": "transformer_policy｜Transformer控制策略",
-      "candidates": 1,
+      "candidates": 2,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "diffusion_policy": {
       "label": "diffusion_policy｜扩散策略学习",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "3d_vision": {
       "label": "3d_vision｜3D视觉感知",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "point_based_action": {
       "label": "point_based_action｜基于点的控制",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     },
     "chain_of_thought": {
       "label": "chain_of_thought｜链式推理",
       "candidates": 0,
       "added": 0,
-      "skipped": 0
+      "skipped": 0,
+      "updated": 0
     }
   },
   "summary": {
-    "candidates": 7,
-    "added": 7,
-    "skipped": 161,
+    "candidates": 0,
+    "added": 0,
+    "skipped": 94,
     "updated": 0
   },
   "errors": [],
-  "finished_at": "2025-11-19T20:43:49.364935"
+  "finished_at": "2025-11-19T21:05:04.619439"
 }

@@ -15,6 +15,7 @@ English version & updates: see [`README_EN.md`](README_EN.md).
 | `scripts/enrich_zotero_abstracts.py` | 对缺少 `abstractNote` 的条目调用 CrossRef/Semantic Scholar/arXiv 补充摘要。 |
 | `scripts/list_zotero_collections.py` | 枚举 Zotero Collection 及其树结构，可选列出子项。 |
 | `scripts/import_ris_folder.py` | 遍历文件夹中所有 RIS 文件并批量导入 Zotero。 |
+| `scripts/export_zotero_pdfs_to_gdrive.py` | 按照 Zotero Collection 树，将条目的 PDF 上传到 Google Drive 并复刻层级。 |
 | `scripts/import_embodied_ai_to_zotero.py` | 解析 Embodied_AI_Paper_List README，生成 RIS 或直接创建条目。 |
 | `scripts/awesome_vla_to_ris.py` | 解析 Awesome-VLA README，按分类生成 RIS/调用 API。 |
 | `scripts/delete_collection_notes.py` | 清理指定集合下的 Notes。 |
@@ -29,7 +30,7 @@ English version & updates: see [`README_EN.md`](README_EN.md).
 | `tag.json` | 标签体系定义（label/description/关键词），用于自动打标签和 collection 映射。 |
 | `tag_schema.json` | Notion 数据库属性示意，用于同步脚本的字段映射。 |
 | `requirements.txt` | 运行所需 Python 依赖列表。 |
-| `exp.example` | 环境变量示例文件，复制为 `exp` 后填入密钥。 |
+| `.env.example` | 环境变量示例文件，复制为 `.env` 后填入密钥。 |
 
 > 其他 Markdown/日志/报告文件用于记录运行结果或导出的数据。
 
@@ -40,27 +41,12 @@ English version & updates: see [`README_EN.md`](README_EN.md).
 python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # 2) 安装依赖（markdown 为可选但推荐，用于本地渲染 Markdown → HTML）
-pip install requests pypdf openai markdown
+pip install requests pypdf openai markdown google-api-python-client
 
-# 3) 环境变量（推荐写入 exp 并 source）
-export ZOTERO_USER_ID=你的用户ID          # 必需
-export ZOTERO_API_KEY=你的APIKey          # 必需，具备写权限
-export ARK_API_KEY=豆包APIKey             # 必需
-export ZOTERO_STORAGE_DIR=~/Zotero/storage # 可选（默认路径如上）
-export ARK_BOT_MODEL=bot-xxxxxxxxxxxxxxx  # 可选，未设置会自动回退
-# 若需要切换至千问/Qwen（DashScope）或其它 OpenAI 兼容模型：
-# export AI_PROVIDER=qwen
-# export DASHSCOPE_API_KEY=你的DashScopeKey
-# export DASHSCOPE_MODEL=qwen3-max
-# 也可以指定任意 OpenAI 兼容端点：
-# export AI_PROVIDER=openai
-# export AI_API_KEY=sk-xxx
-# export AI_BASE_URL=https://api.openai.com/v1
-# export AI_MODEL=gpt-4o-mini
-
-# 4) 每次运行前加载（首次将 exp.example 复制为 exp 并填好变量）
-cp -n exp.example exp 2>/dev/null || true
-source ./exp
+# 3) 环境变量：复制 `.env.example` 为 `.env` 并填入密钥（Python 脚本会自动加载，无需 source）
+cp -n .env.example .env 2>/dev/null || true
+# 需要在 shell 中直接使用变量时，可选择：
+# set -a; source .env; set +a
 ```
 
 快速自测（可选）：
@@ -130,7 +116,7 @@ PY
   `python scripts/sync_zotero_to_notion.py --collection-name "Embodied AI" --recursive --limit 500 --tag-file ./tag.json --skip-untitled --enrich-with-doubao`
   - 如需改用 Qwen/其它模型，可配合 `--ai-provider qwen --ai-model qwen3-max` 或相应环境变量。
 
-提示：以上命令都依赖 `source ./exp`，并且建议先用较小的 `--limit` 或 `--dry-run` 进行试跑。
+提示：以上命令依赖 `.env` 中的配置（Python 会自动加载），建议先用较小的 `--limit` 或 `--dry-run` 试跑。
 
 ## 命令速查（Cheat Sheet）
 
@@ -231,7 +217,7 @@ python scripts/awesome_vla_to_ris.py --enrich-dblp --enrich-arxiv --out ./awesom
 
 1. **批量处理某个 Zotero Collection：**
   ```bash
-  source ./exp
+  # .env 已填好后直接运行
   python scripts/summarize_zotero_with_doubao.py \
     --collection-name "Embodied AI" \
     --recursive \
@@ -247,8 +233,7 @@ python scripts/awesome_vla_to_ris.py --enrich-dblp --enrich-arxiv --out ./awesom
 
 2. **对整个文献库运行（不指定 Collection/Tag）：**
    ```bash
-   source ./exp
-   # 小范围试跑
+   # .env 已填好后直接运行；以下为小范围试跑
    python scripts/summarize_zotero_with_doubao.py \
      --limit 50 \
      --max-pages 100 \
@@ -300,7 +285,7 @@ python scripts/awesome_vla_to_ris.py --enrich-dblp --enrich-arxiv --out ./awesom
 删除指定 Collection 中的所有 Notes（包含顶层 Note 与附属 Note）。谨慎使用，建议先 `--dry-run`。
 
 ```bash
-source ./exp
+# .env 已填好后直接运行
 # 预览
 python scripts/delete_collection_notes.py --collection-name "Surveys" --dry-run
 # 真正删除
@@ -316,7 +301,7 @@ python scripts/delete_collection_notes.py --collection-name "Surveys"
 常用示例：
 
 ```bash
-source ./exp
+# .env 已填好后直接运行
 # 预览整个库中的重复情况（不执行修改）
 python scripts/merge_zotero_duplicates.py --dry-run
 
@@ -336,7 +321,7 @@ python scripts/merge_zotero_duplicates.py \
 输出 Zotero 文献库的 Collection 层级结构，可选展示每个 Collection 下的部分条目，便于快速了解库的组织方式。
 
 ```bash
-source ./exp
+# .env 已填好后直接运行
 # 打印所有 Collection 的树状结构
 python scripts/list_zotero_collections.py
 
@@ -372,7 +357,7 @@ python scripts/list_zotero_collections.py \
 批量检查 Zotero 条目是否缺失摘要（abstractNote），并按“条目 URL → CrossRef → Semantic Scholar → arXiv”的优先级自动补全，无法获取则跳过。
 
 ```bash
-source ./exp
+# .env 已填好后直接运行
 # 扫描整个库，找出缺失摘要的条目并写回
 python scripts/enrich_zotero_abstracts.py
 
@@ -398,8 +383,7 @@ python scripts/enrich_zotero_abstracts.py \
 
 基于 `tag.json` 的关键词体系，自动检索近期高影响力论文、打分筛选、去重后写入 Zotero，并按标签放入对应 Collection，自动附上 PDF 链接与摘要（若可获取）。
 
-```bash
-source ./exp
+# .env 已填好后直接运行
 
 # 以 tag.json 为标签体系，检索近 14 天，按每个标签保留 Top-10
 python scripts/watch_and_import_papers.py \
@@ -451,8 +435,7 @@ python scripts/watch_and_import_papers.py \
 
 运行示例：
 
-```bash
-source ./exp
+# .env 已填好后直接运行
 # 优先使用 watch 结果（.data/new_items_watch.json），扫描过去 24 小时新增：
 python scripts/fetch_missing_pdfs.py --since-hours 24 --new-items-json .data/new_items_watch.json
 
@@ -476,6 +459,45 @@ python scripts/fetch_missing_pdfs.py --since-hours 12 --limit 50
 
 必备环境变量：`ZOTERO_USER_ID`, `ZOTERO_API_KEY`，推荐设置 `UNPAYWALL_EMAIL` 以提高命中率。
 
+## export_zotero_pdfs_to_gdrive.py
+
+按照 Zotero Collection 的树状结构，将条目的 PDF 附件同步到 Google Drive 指定目录下，自动创建对应的文件夹。适用于把分学科/专题的 PDF 备份到共享云盘，保持与 Zotero 一致的层级。
+
+使用前准备：
+- 在 Google Cloud Console 创建服务账号，生成 JSON Key（`service-account.json`）。
+- 在目标 Google Drive 文件夹上点击“共享”，把服务账号的邮箱加入为编辑者，获取该文件夹的 `folderId`（链接 `https://drive.google.com/drive/folders/<ID>` 中的 `<ID>`）。
+- `pip install google-api-python-client`（已写入 `requirements.txt`）。
+- 配置 `GOOGLE_SERVICE_ACCOUNT_FILE=/path/to/service-account.json`（或在命令行用 `--credentials-file` 指定）。
+
+示例：同步名为 “Embodied AI” 的集合（含全部子集合）到某个 Drive 文件夹，并仅预览：
+
+```bash
+# .env 已填好后直接运行
+python scripts/export_zotero_pdfs_to_gdrive.py \
+  --collection-name "Embodied AI" \
+  --drive-root-folder 1AbCdEfGhIjKlmnOp \
+  --dry-run
+```
+
+真实上传：
+
+```bash
+python scripts/export_zotero_pdfs_to_gdrive.py \
+  --drive-root-folder 1AbCdEfGhIjKlmnOp \
+  --credentials-file ./service-account.json \
+  --limit 0 \
+  --overwrite
+```
+
+脚本要点：
+- 默认遍历所有顶层集合；可用 `--collection`（key）或 `--collection-name` 只导出某个子树，`--no-recursive` 可仅同步当前层。
+- 会使用 `ZOTERO_STORAGE_DIR` 下的本地附件（`imported_file` / `linked_file` / `imported_url`）。若仅有 `linked_url`，会尝试下载到临时目录后再上传。
+- Google Drive 端默认跳过同名文件，可通过 `--overwrite` 覆盖已有文件。
+- `--limit` 控制每个集合下最多处理多少条目（0 表示不限）。
+- 支持 `--dry-run` 观察将创建哪些文件夹/文件。
+
+必备环境变量：`ZOTERO_USER_ID`, `ZOTERO_API_KEY`，另可通过 `GOOGLE_DRIVE_ROOT_FOLDER` / `GOOGLE_SERVICE_ACCOUNT_FILE` / `GOOGLE_APPLICATION_CREDENTIALS` 预设目标与凭据。
+
 ## sync_zotero_to_notion.py
 
 将 Zotero 条目同步至 Notion 数据库（去重、自动标签、字段严格映射、可选豆包抽取补全）。
@@ -487,9 +509,8 @@ python scripts/fetch_missing_pdfs.py --since-hours 12 --limit 50
 - 可选 `ARK_API_KEY` / `ARK_BOT_MODEL`（启用 `--enrich-with-doubao` 时使用）
 
 常用示例：
-```bash
-source ./exp
-
+# .env 已填好后直接运行
+# 预览（最近 30 天，跳过无标题条目，不写入）
 # 预览（最近 30 天，跳过无标题条目，不写入）
 python scripts/sync_zotero_to_notion.py \
   --since-days 30 \
@@ -548,7 +569,7 @@ python scripts/sync_zotero_to_notion.py \
 一键导入某文件夹（含子目录）下所有 `.ris` 文件至 Zotero（通过 Web API 创建条目）。默认每个 RIS 文件单独归入以“该文件名”命名的 Collection（不合并）；也支持将全部合并到同一个 Collection。
 
 ```bash
-source ./exp
+# .env 已填好后直接运行
 python scripts/import_ris_folder.py \
   --dir ./awesome_vla_ris \
   --dedupe-by-url
@@ -570,7 +591,7 @@ python scripts/import_ris_folder.py \
 ## 常见问题（Troubleshooting）
 
 - 报错 “Missing required environment variable …”
-  - 未加载 `exp` 或缺少必需变量。执行 `source ./exp`，并检查 `ZOTERO_*` 与 `ARK_API_KEY`。
+  - `.env` 未填或缺少必需变量。补齐 `ZOTERO_*`、`ARK_API_KEY`（及 Notion/Google Drive 等可选项），Python 会自动加载。
 
 - 报错 “Failed to resolve api.zotero.org” 或 GitHub RAW 超时
   - 当前网络无法访问外网。摘要脚本可先用 `--pdf-path/--storage-key` 处理本地 PDF；导入脚本建议使用已下载的 README（或待网络恢复再运行）。
@@ -593,7 +614,7 @@ python scripts/import_ris_folder.py \
 - `awesome_vla_to_ris.py`：Awesome-VLA → RIS（可 DBLP / arXiv 增强）
 - `summarize_zotero_with_doubao.py`：批量摘要（本地 PDF / Collection），写入 Notes（Markdown）
 - `delete_collection_notes.py`：删除集合下的所有 Notes（支持 dry-run）
-- `exp`：环境变量示例文件（执行前 `source ./exp`）
+- `.env.example`：环境变量示例文件（复制为 `.env` 后填入），Python 会自动加载
 - `awesome_vla_ris/`、`zotero_import/`、`summaries/`：示例输出目录
 
 ## 安全提示

@@ -2,6 +2,11 @@
 """Download PDFs for recently added Zotero items and attach them locally."""
 from __future__ import annotations
 
+try:  # auto-load .env via sitecustomize if present
+    import sitecustomize  # noqa: F401
+except Exception:
+    pass
+
 import argparse
 import datetime as dt
 import json
@@ -57,17 +62,25 @@ def extract_arxiv_id(text: Optional[str]) -> Optional[str]:
     return None
 
 
-def has_pdf_attachment(children: Iterable[Dict[str, Any]]) -> bool:
+def inspect_pdf_attachments(children: Iterable[Dict[str, Any]]) -> Tuple[bool, List[str]]:
+    has_local = False
+    remote_links: List[str] = []
     for child in children:
         data = child.get("data") or child
         if data.get("itemType") != "attachment":
             continue
         filename = (data.get("filename") or "").lower()
         is_pdf = data.get("contentType") == "application/pdf" or filename.endswith(".pdf")
+        if not is_pdf:
+            continue
         link_mode = (data.get("linkMode") or "").lower()
-        if is_pdf and link_mode in {"imported_file", "linked_file", "imported_url"}:
-            return True
-    return False
+        if link_mode in {"imported_file", "linked_file", "imported_url"}:
+            has_local = True
+        elif link_mode == "linked_url":
+            url = data.get("url") or data.get("path")
+            if url:
+                remote_links.append(url)
+    return has_local, remote_links
 
 
 def sanitize_filename(title: str) -> str:
@@ -229,10 +242,14 @@ def main() -> None:
             skipped += 1
             continue
         children = zot.fetch_children(key)
-        if has_pdf_attachment(children):
-            print(f"[INFO] Item {key} already has PDF attachments; skipping.")
+        has_pdf, remote_links = inspect_pdf_attachments(children)
+        if has_pdf:
+            print(f"[INFO] Item {key} already has local PDF attachments; skipping.")
             continue
         sources = guess_pdf_sources(parent, unpaywall_email)
+        if remote_links:
+            for url in remote_links:
+                sources.insert(0, (url, "existing attachment link"))
         if not sources:
             skipped += 1
             print(f"[INFO] No PDF sources found for {parent.get('title') or key}")

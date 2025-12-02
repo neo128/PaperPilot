@@ -4,7 +4,7 @@ Import all RIS files in a folder into Zotero via Web API.
 --------------------------------------------------------
 
 Usage:
-  source ./exp
+  # .env filled; Python auto-loads it
   python scripts/import_ris_folder.py --dir ./zotero_import \
     --collection-name "Imported (RIS)" --create-collection --dedupe-by-url
 
@@ -13,6 +13,11 @@ Notes:
   - This script parses minimal RIS (TI/UR/AU/PY/KW). Items are created as
     'webpage' with title/url/authors/date/tags and optionally placed into a collection.
 """
+try:  # auto-load .env via sitecustomize if present
+    import sitecustomize  # noqa: F401
+except Exception:
+    pass
+
 from __future__ import annotations
 
 import argparse

@@ -4,3 +4,4 @@ openai>=1.0
 langchain-core>=0.3.10
 # Optional, for local Markdown rendering in notes
 markdown>=3.5
+google-api-python-client>=2.129.0

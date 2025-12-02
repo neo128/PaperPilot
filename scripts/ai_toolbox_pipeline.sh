@@ -8,7 +8,7 @@ usage() {
   cat <<'USAGE'
 PaperPilot Pipeline
 -------------------
-Runs selected stages end-to-end. Make sure you've `source ./exp` first.
+Runs selected stages end-to-end. Make sure `.env` is filled (Python auto-loads it; shell tools can use `set -a; source .env; set +a`).
 
 Usage:
   scripts/ai_toolbox_pipeline.sh [options]
@@ -141,4 +141,3 @@ fi
 
 echo
 echo "[DONE] Pipeline completed."
-

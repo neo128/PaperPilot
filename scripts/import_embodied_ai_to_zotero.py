@@ -17,6 +17,11 @@ Notes:
   Tip: select the target Collection first, then import; or tick "Place into new collection" during import.
 - API mode will deduplicate by URL before creating items.
 """
+try:  # auto-load .env via sitecustomize if present
+    import sitecustomize  # noqa: F401
+except Exception:
+    pass
+
 import argparse
 import os
 import re
