@@ -14,7 +14,7 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -35,6 +35,9 @@ except ImportError as exc:  # pragma: no cover - hint for missing deps
 FOLDER_MIME = "application/vnd.google-apps.folder"
 PDF_MIME = "application/pdf"
 DRIVE_SCOPE = "https://www.googleapis.com/auth/drive"
+ZOTERO_COLLECTION_PROP = "zotero_collection_key"
+ZOTERO_ROOT_PROP = "zotero_root_id"
+ZOTERO_PARENT_PROP = "zotero_parent_key"
 
 
 def ensure_env(name: str) -> str:
@@ -66,6 +69,10 @@ def sanitize_drive_name(name: str, default: str = "Untitled") -> str:
 def sanitize_filename(name: str) -> str:
     cleaned = name.strip() or "document"
     return re.sub(r"[\\/:*?\"<>|]", "_", cleaned)
+
+
+def escape_drive_query(value: str) -> str:
+    return value.replace("'", "\\'")
 
 
 class ZoteroAPI:
@@ -158,12 +165,15 @@ class DriveConfig:
     oauth_token_file: Optional[Path] = None
     http_timeout: int = 180
     upload_chunk_size: int = 5 * 1024 * 1024  # 5 MB
+    sync_folders: bool = True
+    prune_missing: bool = False
 
 
 class DriveClient:
     def __init__(self, cfg: DriveConfig):
         self.cfg = cfg
         self._folder_cache: Dict[Tuple[str, str], str] = {}
+        self._collection_cache: Dict[str, str] = {}
         self._existing_files: Dict[str, Dict[str, str]] = {}
         if cfg.dry_run:
             self.service = None
@@ -215,31 +225,171 @@ class DriveClient:
             except Exception:
                 pass
 
-    def ensure_folder(self, parent_id: str, name: str) -> str:
+    def _collection_props(self, collection_key: str, parent_key: Optional[str]) -> Dict[str, str]:
+        return {
+            ZOTERO_COLLECTION_PROP: collection_key,
+            ZOTERO_ROOT_PROP: self.cfg.root_folder,
+            ZOTERO_PARENT_PROP: parent_key or "",
+        }
+
+    def _needs_prop_update(self, current: Optional[Dict[str, str]], expected: Dict[str, str]) -> bool:
+        if not current:
+            return True
+        for key, value in expected.items():
+            if current.get(key) != value:
+                return True
+        return False
+
+    def _find_folder_by_name(self, parent_id: str, name: str) -> Optional[Dict[str, Any]]:
+        q_name = escape_drive_query(name)
+        query = f"'{parent_id}' in parents and trashed=false and mimeType='{FOLDER_MIME}' and name = '{q_name}'"
+        resp = self.service.files().list(q=query, fields="files(id,name,parents,appProperties)", pageSize=1).execute()
+        files = resp.get("files", [])
+        return files[0] if files else None
+
+    def _find_folder_by_collection_key(self, collection_key: str) -> Optional[Dict[str, Any]]:
+        q_key = escape_drive_query(collection_key)
+        q_root = escape_drive_query(self.cfg.root_folder)
+        query = (
+            f"trashed=false and mimeType='{FOLDER_MIME}' and "
+            f"appProperties has {{ key='{ZOTERO_COLLECTION_PROP}' and value='{q_key}' }} and "
+            f"appProperties has {{ key='{ZOTERO_ROOT_PROP}' and value='{q_root}' }}"
+        )
+        resp = self.service.files().list(q=query, fields="files(id,name,parents,appProperties)", pageSize=2).execute()
+        files = resp.get("files", [])
+        if len(files) > 1:
+            print(f"[WARN] Multiple Drive folders match collection {collection_key}; using the first.")
+        return files[0] if files else None
+
+    def _sync_folder_metadata(
+        self,
+        folder_id: str,
+        info: Dict[str, Any],
+        expected_parent_id: str,
+        expected_name: str,
+        collection_key: str,
+        parent_key: Optional[str],
+    ) -> None:
+        if not self.cfg.sync_folders:
+            return
+        props = self._collection_props(collection_key, parent_key)
+        update_body: Dict[str, Any] = {}
+        actions: List[str] = []
+        if info.get("name") != expected_name:
+            update_body["name"] = expected_name
+            actions.append(f"rename to '{expected_name}'")
+        if self._needs_prop_update(info.get("appProperties"), props):
+            update_body["appProperties"] = props
+            actions.append("update zotero metadata")
+        parents = info.get("parents") or []
+        add_parent: Optional[str] = None
+        remove_parents: List[str] = []
+        if expected_parent_id not in parents:
+            add_parent = expected_parent_id
+            remove_parents = parents
+            actions.append(f"move under {expected_parent_id}")
+        elif len(parents) > 1:
+            remove_parents = [p for p in parents if p != expected_parent_id]
+            if remove_parents:
+                actions.append(f"remove extra parents {remove_parents}")
+        if not actions:
+            return
+        if self.cfg.dry_run:
+            print(f"[DRY] Would sync folder '{info.get('name')}' ({folder_id}): " + "; ".join(actions))
+            return
+        update_kwargs: Dict[str, Any] = {"fileId": folder_id, "fields": "id,name,parents"}
+        if update_body:
+            update_kwargs["body"] = update_body
+        if add_parent:
+            update_kwargs["addParents"] = add_parent
+        if remove_parents:
+            update_kwargs["removeParents"] = ",".join(remove_parents)
+        self.service.files().update(**update_kwargs).execute()
+        print(f"[DRIVE] Synced folder '{expected_name}' ({folder_id}): " + "; ".join(actions))
+
+    def _list_zotero_folders(self) -> List[Dict[str, Any]]:
+        q_root = escape_drive_query(self.cfg.root_folder)
+        query = (
+            f"trashed=false and mimeType='{FOLDER_MIME}' and "
+            f"appProperties has {{ key='{ZOTERO_ROOT_PROP}' and value='{q_root}' }}"
+        )
+        out: List[Dict[str, Any]] = []
+        page_token: Optional[str] = None
+        while True:
+            resp = (
+                self.service.files()
+                .list(
+                    q=query,
+                    fields="nextPageToken, files(id,name,parents,appProperties)",
+                    pageToken=page_token,
+                    pageSize=1000,
+                )
+                .execute()
+            )
+            out.extend(resp.get("files", []))
+            page_token = resp.get("nextPageToken")
+            if not page_token:
+                break
+        return out
+
+    def ensure_folder(
+        self,
+        parent_id: str,
+        name: str,
+        collection_key: Optional[str] = None,
+        parent_key: Optional[str] = None,
+    ) -> str:
         safe_name = sanitize_drive_name(name)
         cache_key = (parent_id, safe_name)
+        if collection_key and collection_key in self._collection_cache:
+            return self._collection_cache[collection_key]
         if cache_key in self._folder_cache:
             return self._folder_cache[cache_key]
         if self.cfg.dry_run:
             fake_id = f"{parent_id}/{safe_name}"
             self._folder_cache[cache_key] = fake_id
+            if collection_key:
+                self._collection_cache[collection_key] = fake_id
             return fake_id
-        # Check existing folder
-        q_name = safe_name.replace("'", "\\'")
-        query = (
-            f"'{parent_id}' in parents and trashed=false and mimeType='{FOLDER_MIME}' and name = '{q_name}'"
-        )
-        resp = self.service.files().list(q=query, fields="files(id,name)", pageSize=1).execute()
-        files = resp.get("files", [])
-        if files:
-            folder_id = files[0]["id"]
-        else:
-            metadata = {"name": safe_name, "mimeType": FOLDER_MIME, "parents": [parent_id]}
-            folder = self.service.files().create(body=metadata, fields="id").execute()
-            folder_id = folder["id"]
-            print(f"[DRIVE] Created folder '{safe_name}' under {parent_id}")
+        info: Optional[Dict[str, Any]] = None
+        if collection_key and self.cfg.sync_folders:
+            info = self._find_folder_by_collection_key(collection_key)
+        if not info:
+            info = self._find_folder_by_name(parent_id, safe_name)
+        if info:
+            folder_id = info["id"]
+            self._folder_cache[cache_key] = folder_id
+            if collection_key:
+                self._collection_cache[collection_key] = folder_id
+            if collection_key and self.cfg.sync_folders:
+                self._sync_folder_metadata(folder_id, info, parent_id, safe_name, collection_key, parent_key)
+            return folder_id
+        metadata: Dict[str, Any] = {"name": safe_name, "mimeType": FOLDER_MIME, "parents": [parent_id]}
+        if collection_key and self.cfg.sync_folders:
+            metadata["appProperties"] = self._collection_props(collection_key, parent_key)
+        folder = self.service.files().create(body=metadata, fields="id").execute()
+        folder_id = folder["id"]
+        print(f"[DRIVE] Created folder '{safe_name}' under {parent_id}")
         self._folder_cache[cache_key] = folder_id
+        if collection_key:
+            self._collection_cache[collection_key] = folder_id
         return folder_id
+
+    def prune_missing_collections(self, existing_keys: Set[str]) -> None:
+        if not self.cfg.prune_missing:
+            return
+        if self.cfg.dry_run:
+            print("[DRY] Skipping prune of missing collections (dry-run enabled).")
+            return
+        for folder in self._list_zotero_folders():
+            props = folder.get("appProperties") or {}
+            collection_key = props.get(ZOTERO_COLLECTION_PROP)
+            if not collection_key or collection_key in existing_keys:
+                continue
+            self.service.files().update(fileId=folder["id"], body={"trashed": True}).execute()
+            print(
+                f"[DRIVE] Trashed folder '{folder.get('name')}' ({folder['id']}) missing in Zotero"
+            )
 
     def _ensure_existing_cache(self, folder_id: str) -> None:
         if self.cfg.dry_run or folder_id in self._existing_files:
@@ -386,7 +536,12 @@ def export_collection(
     args: argparse.Namespace,
     temp_dir: Path,
 ) -> None:
-    folder_id = drive.ensure_folder(parent_drive_id, collection.get("name") or collection["key"])
+    folder_id = drive.ensure_folder(
+        parent_drive_id,
+        collection.get("name") or collection["key"],
+        collection_key=collection.get("key"),
+        parent_key=collection.get("parent"),
+    )
     limit = args.limit if (args.limit and args.limit > 0) else None
     count = 0
     for entry in zot.iter_items(collection["key"], limit):
@@ -428,7 +583,18 @@ def parse_args() -> argparse.Namespace:
     )
     ap.add_argument("--limit", type=int, default=0, help="Max items per collection (<=0 means no limit).")
     ap.add_argument("--no-recursive", dest="recursive", action="store_false", help="Do not descend into child collections.")
-    ap.set_defaults(recursive=True)
+    ap.add_argument(
+        "--no-sync-folders",
+        dest="sync_folders",
+        action="store_false",
+        help="Do not rename/move Drive folders to match Zotero collection changes.",
+    )
+    ap.add_argument(
+        "--prune-missing-collections",
+        action="store_true",
+        help="Trash Drive folders for collections removed from Zotero (only folders tagged by this tool).",
+    )
+    ap.set_defaults(recursive=True, sync_folders=True)
     ap.add_argument("--overwrite", action="store_true", help="Overwrite files with the same name (default skips existing).")
     ap.add_argument("--dry-run", action="store_true", help="Preview folders/uploads without touching Google Drive.")
     ap.add_argument("--http-timeout", type=int, default=180, help="HTTP timeout (seconds) for Drive API uploads.")
@@ -502,6 +668,8 @@ def main() -> None:
         oauth_token_file=Path(oauth_token_file).expanduser() if oauth_token_file else None,
         http_timeout=max(10, args.http_timeout),
         upload_chunk_size=max(256 * 1024, args.upload_chunk_mb * 1024 * 1024),
+        sync_folders=args.sync_folders,
+        prune_missing=args.prune_missing_collections,
     )
     drive = DriveClient(cfg)
 
@@ -509,6 +677,7 @@ def main() -> None:
         temp_path = Path(tmp_dir)
         for col in targets:
             export_collection(zot, drive, col, children_map, cfg.root_folder, storage_dir, args, temp_path)
+    drive.prune_missing_collections(set(by_key.keys()))
 
 
 if __name__ == "__main__":

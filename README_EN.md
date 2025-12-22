@@ -156,6 +156,8 @@ Key flags:
   ```
 - Behavior notes:
   - Defaults to all top-level collections; use `--collection` or `--collection-name` to export a subtree, and `--no-recursive` to stay on the current level only.
+  - Tags Drive folders with Zotero collection metadata so later runs can rename/move folders to match Zotero structure changes (disable with `--no-sync-folders`).
+  - Use `--prune-missing-collections` to trash Drive folders for collections deleted from Zotero (only folders tagged by this script).
   - Reads local attachments from `ZOTERO_STORAGE_DIR` (imported_file / linked_file / imported_url). If only a `linked_url` exists, the script downloads it to a temp folder before uploading.
   - Skips files that already exist in the Drive folder unless `--overwrite` is set.
   - `--limit` caps the number of parent items per collection (0 = unlimited). `--dry-run` shows the intended plan without touching Drive.

@@ -491,6 +491,8 @@ python scripts/export_zotero_pdfs_to_gdrive.py \
 
 脚本要点：
 - 默认遍历所有顶层集合；可用 `--collection`（key）或 `--collection-name` 只导出某个子树，`--no-recursive` 可仅同步当前层。
+- 会给 Drive 文件夹写入 Zotero Collection Key 的元信息，用于后续自动改名/移动以保持结构一致（可用 `--no-sync-folders` 关闭）。
+- 如需清理 Zotero 中已删除的集合文件夹，可加 `--prune-missing-collections`（仅影响本脚本标记过的文件夹）。
 - 会使用 `ZOTERO_STORAGE_DIR` 下的本地附件（`imported_file` / `linked_file` / `imported_url`）。若仅有 `linked_url`，会尝试下载到临时目录后再上传。
 - Google Drive 端默认跳过同名文件，可通过 `--overwrite` 覆盖已有文件。
 - `--limit` 控制每个集合下最多处理多少条目（0 表示不限）。
